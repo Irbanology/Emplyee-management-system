@@ -1,0 +1,168 @@
+/* Responsive Design */
+@media (min-width: 1400px) {
+    .sidebar {
+        width: 400px;
+    }
+}
+
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    visibility: hidden;
+    height: 100vh;
+    transform: translateX(-100%);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  }
+
+
+  .toggle-btn {
+      display: block;
+      visibility: visible;
+  }
+
+  .sidebar > span {
+    display: block;
+    visibility: visible;
+  }
+
+   .modal-content {
+     min-width: 97%;
+  }
+}
+
+
+@media (max-width: 700px) {
+    .modal-content {
+        min-width: 95%;
+    }
+
+    .admin-header h2 {
+      width: 43%;
+      /* overflow: hidden;
+      text-overflow: ellipsis;
+      text-wrap: nowrap; */
+    }
+}
+
+@media (max-width: 500px) {
+
+    .form-group textarea {
+        min-width: 70%;
+    }
+
+    .form-group select {
+    width: 106%;
+  }
+
+  .profile-section p {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .details h2 {
+    font-size: 1.3em;
+}
+
+ .details strong {
+    margin-right: 2px;
+
+ }
+
+
+  .btns {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding-block: 10px;
+  }
+
+  .btns button {
+    font-weight: 400;
+    padding: 8px 15px;
+ }
+
+ .content .employee-btns {
+    padding-inline: 3px;
+  }
+}
+
+
+@media (max-width: 380px) {
+
+   .modal button, .employee-btns button {
+      font-size: 0.7rem;
+    }
+
+    .modal-content {
+        min-width: 90%;
+    }
+
+   .employee-card {
+    width: 97%;
+   }
+
+  .employee-department {
+    width: 100%;
+  }
+
+    .profile-section {
+        margin: -50px;
+    }
+
+    .profile-section img {
+        width: 80px;
+        height: 80px;
+    }
+
+  .profile-section h1 {
+    font-weight: 500;
+    font-size: 2em;
+    margin: 5px 0;
+  }
+
+  .details h2 {
+    font-size: 1em;
+    margin-top: 62px;
+    margin-left: -16px;
+}
+
+ .details ul {
+    padding-left: 10px
+ }
+
+ .details ul li {
+    font-size: 12px;
+ }
+
+  .details ul li strong{
+    font-size: 12px;
+  }
+
+
+
+}
+
+
+
+@media (max-width: 340px) {
+
+  .sidebar {
+    width: 90%;
+  }
+
+  .main-content {
+    padding: 8px;
+  }
+
+  .admin-header { justify-content: flex-end; }
+
+  .admin-header > h2 { display: none; }
+}
+
+
+

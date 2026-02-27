@@ -1,0 +1,68 @@
+/* Loading Animation */
+.loading-wrapper {
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+}
+
+
+
+.loading-animation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #42DEDF;
+  font-family: Arial, sans-serif;
+  width: 100%;
+  height: 100%;
+  background-color: #000000f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+.loading-animation video {
+  position: absolute;
+  opacity: 0.5;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.loading-bar {
+  width: 300px;
+  height: 10px;
+  background: #42DEDF;
+  margin: 10px auto;
+  animation: loadingBar 1.2s infinite;
+  z-index: 10;
+}
+
+.loading-animation p {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    z-index: 10;
+}
+
+@keyframes loadingBar {
+  0% {
+    width: 10px;
+    background-color: #757FF9;
+  }
+  50% {
+    width: 200px;
+    background-color: #42DEDF;
+  }
+  100% {
+    width: 10px;
+    background-color: #757FF9;
+  }
+}

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <title>Employee Profile</title>
+  <link rel="stylesheet" href="./src/css/toast.css">
+  <link rel="stylesheet" href="./src/css/employee.css">
+  <link rel="stylesheet" href="./src/css/loading.css">
+  <link rel="stylesheet" href="./src/css/spiner.css">
+</head>
+<body>
+  <div class="profile-container">
+    <!-- Cover Photo -->
+    <div class="cover-video">
+      <video src="./assets/videos/cover-video.mp4" muted autoplay loop></video>
+    </div>
+
+    <!-- Profile Section -->
+    <div class="profile-section">
+      <div class="profile-photo">
+        <img src="./assets/images/human-img.png" alt="Profile Photo">
+      </div>
+      <div class="profile-info">
+        <h1 class="employee-name"></h1>
+        <p class="employee-department">Department: <span class="IT"></span></p>
+      </div>
+      <button class="edit-profile-btn">Edit Profile</button>
+    </div>
+  </div>
+
+  <section class="daily-update-section">
+    <div class="daily-update-card">
+      <h2>Daily Work Update</h2>
+      <p class="daily-update-hint">Submit one update per day. You cannot submit again for the same day.</p>
+      <form id="dailyUpdateForm" class="daily-update-form">
+        <div class="form-group">
+          <label for="workDoneToday">Work Done Today <span>*</span></label>
+          <textarea id="workDoneToday" name="workDoneToday" rows="4" placeholder="What did you complete today?" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="workPlannedNext">Work Planned Next <span>*</span></label>
+          <textarea id="workPlannedNext" name="workPlannedNext" rows="4" placeholder="What do you plan to do next?" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="blockers">Any Blockers <span>*</span></label>
+          <textarea id="blockers" name="blockers" rows="2" placeholder='e.g. None / Waiting on design' required></textarea>
+        </div>
+        <button type="submit" class="btn save-btn" id="submitDailyUpdateBtn"><span><i class="fa-solid fa-paper-plane"></i></span> Submit Update</button>
+      </form>
+      <p class="daily-update-status" id="dailyUpdateStatus"></p>
+    </div>
+  </section>
+
+  <section class="employee-info-section">
+  <div class="employee-info-card">
+    <div class="employee-info-header">
+      <h2>Your Personal Information</h2>
+    </div>
+    <div class="employee-info-body">
+      <div class="employee-info-row">
+        <span class="info-label">Name:</span>
+        <span class="info-value fullName">John Doe</span>
+      </div>
+      <div class="employee-info-row">
+        <span class="info-label">Email:</span>
+        <span class="info-value email">johndoe@example.com</span>
+      </div>
+      <div class="employee-info-row">
+        <span class="info-label">Joining Date:</span>
+        <span class="info-value joining-date">January 1, 2023</span>
+      </div>
+      <div class="employee-info-row">
+        <span class="info-label">Description:</span>
+        <span class="info-value desc">
+          John is a highly skilled software engineer with expertise in backend and frontend technologies. He excels in team collaboration and problem-solving.
+        </span>
+      </div>
+    </div>
+  </div>
+  </section>
+
+
+  <div class="modal">
+  <div class="modal-content">
+    <h2>Edit Profile</h2>
+    <form class="profileForm">
+      <div class="form-group">
+        <label for="fullname">Full Name</label>
+        <input type="text" id="fullname" placeholder="Enter your full name" required>
+      </div>
+      <div class="profile-pic-upload">
+        <label for="profile-pic" class="upload-area">
+          <span class="closeImg"><i class="fa-solid fa-xmark"></i></span>
+          <img class="previewImg" alt="">
+          <span class="upload-icon"><i class="fa-solid fa-upload"></i></span>
+          <span class="upload-text">Upload Profile Picture</span>
+          <input type="file" id="profile-pic" accept="image/*" hidden>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn save-btn">Update profile</button>
+        <button type="button" class="btn cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </div>
+  </div>
+
+  <footer>
+    <p>Alasoft TEAM &COPY; 2025</p>
+    <button class="logout">Sign-Out</button>
+  </footer>
+
+    <!-- Toast messages -->
+    <div class="notifications"></div>
+
+    <!-- SPINNER FOR LOADING -->
+    <div id="spinner" class="spinner-overlay">
+      <div class="spinner"></div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="./src/js/employee.js"></script>
+</body>
+</html>
+
+

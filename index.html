@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="./src/css/login.css">
+    <link rel="stylesheet" href="./src/css/toast.css">
+    <link rel="stylesheet" href="./src/css/spiner.css">
+    <link rel="shortcut icon" href="./assets/images/login.png" type="image/x-icon">
+    <title>Ems-system</title>
+</head>
+
+<body>
+
+    <div class="container" id="container">
+        <div class="form-container sign-up">
+            <form>
+                <h1>Admin</h1>
+                <div class="social-icons">
+                    <!-- <a href="#" class="icon"><i class="fa-brands fa-google-plus-g"></i></a>
+                    <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a> -->
+                    <a href="https://alasoft.co/" class="icon"><i class="fa-solid fa-globe"></i></a>
+                    <a href="https://www.linkedin.com/company/alasoftmanagement/" class="icon"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+                <span>or use your email and password for sign-in</span>
+                <input id="adminEmail" type="email" placeholder="Email">
+                <input id="adminPassword" type="password" placeholder="Password">
+                <button type="button" id="adminBtn" >Sign In</button>
+            </form>
+        </div>
+        <div class="form-container sign-in">
+            <form>
+                <h1>Employee</h1>
+                <!-- <h1>Sign In</h1> -->
+                <div class="social-icons">
+                    <!-- <a href="#" class="icon"><i class="fa-brands fa-google-plus-g"></i></a>
+                    <a href="#" class="icon"><i class="fa-brands fa-facebook-f"></i></a> -->
+                    <a href="https://alasoft.co/" class="icon"><i class="fa-solid fa-globe"></i></a>
+                    <a href="https://www.linkedin.com/company/alasoftmanagement/" class="icon"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+                <span>or use your email and password for sign-in</span>
+                <input id="employeeEmail" type="email" placeholder="Email">
+                <input id="employeePassword" type="password" placeholder="Password">
+                <a href="#">Forgot Your Password?</a>
+                <button id="employeeBtn" type="button" >Sign In</button>
+            </form>
+        </div>
+        <div class="toggle-container">
+            <div class="toggle">
+                <div class="toggle-panel toggle-left">
+                    <h1>Welcome Sir!</h1>
+                    <p>Enter your email and password to access the admin page</p>
+                    <button class="hidden" id="login">Employee</button>
+                </div>
+                <div class="toggle-panel toggle-right">
+                    <h1>Hello, Employee!</h1>
+                    <p>Sign in with your email and password to access your profile.</p>
+                    <button class="hidden" id="register">Admin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast messages -->
+    <div class="notifications"></div>
+
+    <!-- SPINNER FOR LOADING -->
+    <div id="spinner" class="spinner-overlay">
+      <div class="spinner"></div>
+    </div>
+
+
+</body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="./src/js/app.js"></script>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="./src/css/style.css">
+  <link rel="stylesheet" href="./src/css/mediaquery.css">
+  <link rel="stylesheet" href="./src/css/toast.css">
+  <link rel="stylesheet" href="./src/css/spinner.css">
+  <link rel="stylesheet" href="./src/css/loading.css">
+  <link rel="shortcut icon" href="./assets/images/favico.png" type="image/x-icon">
+  <title>Admin - create and do anything with employees</title>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <span id="closeToggleSidebar" class="close" data-toggle>&times;</span>
+      <div class="sidebar-inner">
+        <div class="logo-section">
+          <img src="./assets/images/team.png" alt="Logo" class="logo">
+          <span class="logo-text">EMS-System</span>
+        </div>
+        <div class="categories">
+          <h1 class="sidebar-heading">Departments</h1>
+          <ul class="roles">
+            <li class="role active" data-section="employees">All Employees</li>
+            <li class="role" data-section="employees" data-department="Marketing">Marketing</li>
+            <li class="role" data-section="employees" data-department="Graphics Designing">Graphics</li>
+            <li class="role" data-section="employees" data-department="Android Development">Mobile Dev</li>
+            <li class="role" data-section="employees" data-department="Software Engineering">Software Eng.</li>
+            <li class="role" data-section="employees" data-department="Human resources">HR</li>
+          </ul>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="role daily-updates-tab" data-section="daily-updates" role="button" tabindex="0"><i class="fa-solid fa-clipboard-list"></i> Daily Updates</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <header class="admin-header">
+        <h2>Welcome to the Admin Panel</h2>
+        <div class="logout-title">
+          <button class="logout-btn"><span><i class="fa-solid fa-right-from-bracket"></i></span> Sign-Out</button>
+          <span class="toggle-btn" id="toggleSidebar" data-toggle>&#9776;</span>
+        </div>
+      </header>
+
+      <div class="content" id="mainContent">
+        <div class="employee-btns" id="employeeBtns">
+          <button id="openModal" data-toggle><span><i class="fa-solid fa-user-plus"></i></span> Add employee</button>
+        </div>
+        <div class="employee-list-container" id="employeeListSection">
+          <h1>Employee List</h1>
+          <div class="employee-list-card-container">
+            <div class="empty-employee">
+              <span><i class="fa-solid fa-users-slash"></i></span>
+              <h3>No employee has been created so far.</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="daily-updates-section" id="dailyUpdatesSection" style="display: none;">
+          <h1>Daily Work Updates</h1>
+          <div class="updates-filters">
+            <div class="form-group filter-group">
+              <label for="filterUpdateDate">Filter by Date</label>
+              <input type="date" id="filterUpdateDate" name="filterUpdateDate">
+            </div>
+            <div class="form-group filter-group">
+              <label for="filterUpdateEmployee">Filter by Employee</label>
+              <select id="filterUpdateEmployee" name="filterUpdateEmployee">
+                <option value="">All Employees</option>
+              </select>
+            </div>
+            <button type="button" class="btn-green" id="applyUpdateFilters">Apply</button>
+            <button type="button" class="btn-green btn-secondary" id="clearUpdateFilters">Clear</button>
+          </div>
+          <div class="updates-not-submitted" id="updatesNotSubmitted"></div>
+          <div class="updates-list-container" id="updatesListContainer">
+            <div class="empty-employee" id="noUpdatesPlaceholder">
+              <span><i class="fa-solid fa-clipboard-list"></i></span>
+              <h3>No daily updates yet.</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>TEAM &copy; 2026</p>
+      </footer>
+
+      <!-- Modal Structure -->
+      <div id="modal" class="modal">
+        <div class="modal-content">
+          <span id="closeModal" class="close" data-toggle>&times;</span>
+          <h2>Add Employee</h2>
+          <form id="employeeForm">
+            <div class="form-group">
+              <label for="fullName">Full Name </label>
+              <input type="text" id="fullName" name="fullName" required>
+            </div>
+            <div class="form-group">
+              <label for="employeeId">Employee ID <span>*</span></label>
+              <input type="text" id="employeeId" name="employeeId" placeholder="e.g. EMP001" required>
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address </label>
+              <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+              <label for="password">Password </label>
+              <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+              <label for="joiningDate">Joining Date </label>
+              <input type="date" id="joiningDate" name="joiningDate" required />
+            </div>
+            <div class="form-group">
+              <label for="department">Department </label>
+              <select id="department" name="department">
+                <option value="">Select Department</option>
+                <option value="Android Development">Mobile Development</option>
+                <option value="Software Engineering">Software Engineering</option>
+                <option value="Graphics Designing">Graphics Designing</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Human resources">Human resources</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea id="description" name="description" rows="3" placeholder="Add employee details..."></textarea>
+            </div>
+            <button type="submit" class="btn-green"><span><i class="fa-solid fa-user-plus"></i></span> Add
+              Employee</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Employee Modal -->
+      <div id="employeeModal" class="modal"></div>
+
+    </main>
+
+    <!-- Toast messages -->
+    <div class="notifications"></div>
+
+    <!-- SPINNER FOR LOADING -->
+    <div id="spinner" class="spinner-overlay">
+      <div class="spinner"></div>
+    </div>
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="./src/js/admin.js"></script>
+
+</html>
