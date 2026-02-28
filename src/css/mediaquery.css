@@ -1,7 +1,7 @@
 /* Responsive Design */
 @media (min-width: 1400px) {
     .sidebar {
-        width: 400px;
+        width: 340px;
     }
 }
 
@@ -29,6 +29,59 @@
    .modal-content {
      min-width: 97%;
   }
+
+  /* Daily Updates section – responsive */
+  .daily-updates-section {
+    padding: 16px;
+  }
+
+  .updates-filters {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .updates-filters input,
+  .updates-filters select {
+    min-width: 100%;
+  }
+
+  .updates-list-container {
+    max-height: 60vh;
+    min-height: 180px;
+  }
+
+  .update-card-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .update-employee-name,
+  .update-employee-id {
+    font-size: 0.95rem;
+  }
+
+  .update-date {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 4px;
+    font-size: 0.85rem;
+  }
+
+  .update-card-body {
+    padding: 12px;
+  }
+
+  .update-card-comments {
+    padding: 10px 12px;
+  }
+
+  .update-card-comments .add-comment-btn,
+  .update-card-comments .submit-comment-btn {
+    width: 100%;
+  }
 }
 
 
@@ -46,8 +99,24 @@
 }
 
 @media (max-width: 500px) {
+  .daily-updates-section h1 {
+    font-size: 1.35rem;
+  }
 
-    .form-group textarea {
+  .update-card-header {
+    padding: 8px 10px;
+  }
+
+  .update-card-body {
+    padding: 10px;
+  }
+
+  .update-field p,
+  .update-text-content {
+    font-size: 13px;
+  }
+
+  .form-group textarea {
         min-width: 70%;
     }
 

@@ -53,6 +53,28 @@
     </div>
   </section>
 
+  <section class="my-updates-section">
+    <div class="my-updates-card">
+      <h2>Your Daily Updates</h2>
+      <p class="my-updates-hint">Click a card to view full update and admin feedback.</p>
+      <div class="updates-container" id="myUpdatesList">
+        <!-- Compact cards filled by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Full update detail modal -->
+  <div class="update-detail-modal" id="updateDetailModal" aria-hidden="true">
+    <div class="update-detail-backdrop"></div>
+    <div class="update-detail-content">
+      <button type="button" class="update-detail-close" id="updateDetailClose" aria-label="Close">&times;</button>
+      <h3 class="update-detail-title" id="updateDetailTitle">Update</h3>
+      <div class="update-detail-body" id="updateDetailBody">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
   <section class="employee-info-section">
   <div class="employee-info-card">
     <div class="employee-info-header">
@@ -108,7 +130,7 @@
   </div>
 
   <footer>
-    <p>Alasoft TEAM &COPY; 2025</p>
+    <p>Alasoft Team &copy; 2026</p>
     <button class="logout">Sign-Out</button>
   </footer>
 

@@ -20,6 +20,29 @@ const createToastForNotification = function (type, icon, title, text){
     )
 }
 
+// Format date string (YYYY-MM-DD) as "Fri, 27 Feb 2026"
+function formatUpdateDate(dateStr) {
+  if (!dateStr || typeof dateStr !== 'string') return dateStr || '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return dateStr;
+  const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
+  const day = d.getDate();
+  const month = d.toLocaleDateString('en-US', { month: 'short' });
+  const year = d.getFullYear();
+  return `${weekday}, ${day} ${month} ${year}`;
+}
+
+// Short date for compact cards: "Fri, 27 Feb"
+function formatUpdateDateShort(dateStr) {
+  if (!dateStr || typeof dateStr !== 'string') return dateStr || '—';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return dateStr;
+  const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
+  const day = d.getDate();
+  const month = d.toLocaleDateString('en-US', { month: 'short' });
+  return `${weekday}, ${day} ${month}`;
+}
+
 // GET RELATIVE TIME TO SHOW A TIME...
 const getRelativeTime = function (milliseconds) {
     const currentTime = new Date().getTime();
@@ -83,6 +106,8 @@ function hideLoading() {
 export { 
     createToastForNotification,
     getRelativeTime,
+    formatUpdateDate,
+    formatUpdateDateShort,
     showSpinner,
     hideSpinner,
     showLoading

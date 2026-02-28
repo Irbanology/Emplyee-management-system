@@ -1,6 +1,6 @@
 // IMPORT ALL MODULES...
 import { getCurrentUser, getEmployeeDataFromDatabase, editEmployeeFromDatabase, updateProfileData, supabaseUrl, logout, checkUserLoginOrNot } from "./db.js";
-import { createToastForNotification, hideSpinner, showSpinner, showLoading } from "./utils.js";
+import { createToastForNotification, formatUpdateDate, formatUpdateDateShort, hideSpinner, showSpinner, showLoading } from "./utils.js";
 import { validateDailyUpdateForm } from "./validate.js";
 
 
@@ -55,11 +55,18 @@ cancelBtn.addEventListener("click", () => {
 });
 
 
-// Ensure employeeData has dailyUpdates array (for existing records)
+// Ensure employeeData has dailyUpdates array and normalized items (for existing records)
 function ensureDailyUpdates(empRecord) {
   if (!empRecord?.employeeData) return empRecord;
   if (!Array.isArray(empRecord.employeeData.dailyUpdates)) {
     empRecord.employeeData.dailyUpdates = [];
+  } else {
+    empRecord.employeeData.dailyUpdates = empRecord.employeeData.dailyUpdates.map((u) => ({
+      ...u,
+      // Backfill defaults for legacy records
+      status: u.status || 'submitted',
+      adminComments: Array.isArray(u.adminComments) ? u.adminComments : [],
+    }));
   }
   return empRecord;
 }
@@ -77,6 +84,7 @@ const showUserData = async () => {
 
   showCurrentDataInPage(currentEmployeeData);
   updateDailyUpdateUI(currentEmployeeData);
+  renderMyUpdates(currentEmployeeData);
 };
 
 showUserData();
@@ -122,6 +130,130 @@ function updateDailyUpdateUI(employeeData) {
     submitDailyUpdateBtn.disabled = false;
   }
 }
+
+function escapeHtmlEmployee(text) {
+  if (text == null || text === '') return '—';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function trimPreview(str, maxLen = 100) {
+  if (str == null) return '—';
+  const t = String(str).trim();
+  if (!t) return '—';
+  return t.length <= maxLen ? t : t.substring(0, maxLen) + '...';
+}
+
+function renderMyUpdates(employeeData) {
+  const container = document.getElementById('myUpdatesList');
+  if (!container) return;
+
+  const data = employeeData?.[0]?.employeeData;
+  const updates = Array.isArray(data?.dailyUpdates) ? data.dailyUpdates : [];
+
+  const sorted = [...updates].sort((a, b) => {
+    const dateCmp = (b.date || '').localeCompare(a.date || '');
+    if (dateCmp !== 0) return dateCmp;
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
+
+  if (sorted.length === 0) {
+    container.innerHTML = '<p class="my-updates-empty">No updates submitted yet. Submit your first update above.</p>';
+    return;
+  }
+
+  container.innerHTML = sorted.map((u) => {
+    const isReviewed = u.status === 'reviewed';
+    const statusLabel = isReviewed ? 'Reviewed' : 'Submitted';
+    const statusClass = isReviewed ? 'reviewed' : 'submitted';
+    const donePreview = trimPreview(u.workDone, 100);
+    const plannedPreview = trimPreview(u.workPlanned, 100);
+    const blockersPreview = trimPreview(u.blockers, 80);
+    const previewLine1 = `✔ ${escapeHtmlEmployee(donePreview)}`;
+    const previewLine2 = `📌 ${escapeHtmlEmployee(plannedPreview)} • ⚠ ${escapeHtmlEmployee(blockersPreview)}`;
+
+    return `
+      <div class="update-card" data-update-id="${escapeHtmlEmployee(u.updateId)}" role="button" tabindex="0">
+        <div class="top">
+          <span class="date">${escapeHtmlEmployee(formatUpdateDateShort(u.date))}</span>
+          <span class="status ${statusClass}">${escapeHtmlEmployee(statusLabel)}</span>
+        </div>
+        <p class="preview">${previewLine1}<br>${previewLine2}</p>
+      </div>
+    `;
+  }).join('');
+}
+
+// Open full update in modal (uses currentEmployeeDataRef)
+function openUpdateDetailModal(updateId) {
+  if (!currentEmployeeDataRef?.length) return;
+  const data = currentEmployeeDataRef[0]?.employeeData;
+  const updates = Array.isArray(data?.dailyUpdates) ? data.dailyUpdates : [];
+  const u = updates.find((x) => String(x.updateId) === String(updateId));
+  if (!u) return;
+
+  const modal = document.getElementById('updateDetailModal');
+  const titleEl = document.getElementById('updateDetailTitle');
+  const bodyEl = document.getElementById('updateDetailBody');
+  if (!modal || !titleEl || !bodyEl) return;
+
+  titleEl.textContent = `Update — ${formatUpdateDate(u.date)}`;
+
+  const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
+  const commentsHtml = comments.length
+    ? comments.map((c) => `<div class="update-detail-comment"><span class="update-detail-comment-text">${escapeHtmlEmployee(c.commentText || '')}</span></div>`).join('')
+    : '<p class="update-detail-no-comments">No admin comments yet.</p>';
+
+  bodyEl.innerHTML = `
+    <div class="update-detail-section">
+      <p class="update-detail-label">Work Done</p>
+      <div class="update-detail-text">${escapeHtmlEmployee(u.workDone || '—')}</div>
+    </div>
+    <div class="update-detail-section">
+      <p class="update-detail-label">Work Planned</p>
+      <div class="update-detail-text">${escapeHtmlEmployee(u.workPlanned || '—')}</div>
+    </div>
+    <div class="update-detail-section">
+      <p class="update-detail-label">Blockers</p>
+      <div class="update-detail-text">${escapeHtmlEmployee(u.blockers || '—')}</div>
+    </div>
+    <div class="update-detail-section update-detail-admin">
+      <p class="update-detail-label">Admin feedback</p>
+      <div class="update-detail-comments-list">${commentsHtml}</div>
+    </div>
+  `;
+
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeUpdateDetailModal() {
+  const modal = document.getElementById('updateDetailModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+}
+
+// Delegated click for update cards + modal close
+const myUpdatesListEl = document.getElementById('myUpdatesList');
+if (myUpdatesListEl) {
+  myUpdatesListEl.addEventListener('click', (e) => {
+    const card = e.target.closest('.update-card');
+    if (card) {
+      const updateId = card.getAttribute('data-update-id');
+      if (updateId) openUpdateDetailModal(updateId);
+      return;
+    }
+  });
+}
+
+document.getElementById('updateDetailClose')?.addEventListener('click', closeUpdateDetailModal);
+document.querySelector('.update-detail-backdrop')?.addEventListener('click', closeUpdateDetailModal);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeUpdateDetailModal();
+});
 
 // PREVIEW IMG CODE FOR SHOW EMPLOYEE PROFILE IMG PREVIEW...
 previewFile.addEventListener("change", (event) => {
@@ -225,14 +357,16 @@ if (dailyUpdateForm) {
       return;
     }
 
+    const nowTs = Date.now();
     const updateEntry = {
-      updateId: Date.now().toString(),
+      updateId: nowTs.toString(),
       date: today,
       workDone,
       workPlanned,
       blockers,
-      createdAt: Date.now(),
+      createdAt: nowTs,
       status: 'submitted',
+      adminComments: [],
     };
 
     const record = currentEmployeeDataRef[0];
@@ -244,6 +378,7 @@ if (dailyUpdateForm) {
       await editEmployeeFromDatabase(record.employeeData, record.id);
       currentEmployeeDataRef = [{ ...record, employeeData: { ...record.employeeData } }];
       updateDailyUpdateUI(currentEmployeeDataRef);
+      renderMyUpdates(currentEmployeeDataRef);
       dailyUpdateForm.reset();
       createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', 'Daily update submitted successfully!');
     } catch (err) {

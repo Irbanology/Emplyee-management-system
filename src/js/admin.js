@@ -1,5 +1,5 @@
 import { validateForm, employeeData } from "./validate.js";
-import { createToastForNotification, getRelativeTime, hideSpinner, showLoading, showSpinner } from "./utils.js";
+import { createToastForNotification, formatUpdateDate, getRelativeTime, hideSpinner, showLoading, showSpinner } from "./utils.js";
 import { 
   createEmployeeDataInDatabase,
   getEmployeeDataFromDatabase,
@@ -40,8 +40,6 @@ logoutBtn.addEventListener("click", async () => {
   sessionCheckForAdmin();
   hideSpinner();
 });
-
-
 
 // Toggle Sidebar
 toggleSidebar.addEventListener('click', () => {
@@ -348,8 +346,13 @@ function aggregateAllUpdates(employeesData) {
   employeesData.forEach(({ id, employeeData: emp }) => {
     const updates = Array.isArray(emp.dailyUpdates) ? emp.dailyUpdates : [];
     updates.forEach((u) => {
-      list.push({
+      const normalizedUpdate = {
         ...u,
+        status: u.status === 'reviewed' ? 'reviewed' : 'submitted',
+        adminComments: Array.isArray(u.adminComments) ? u.adminComments : [],
+      };
+      list.push({
+        ...normalizedUpdate,
         employeeName: emp.fullName,
         employeeId: emp.employeeId || '—',
         employeeEmail: emp.email,
@@ -365,9 +368,21 @@ function aggregateAllUpdates(employeesData) {
   return list;
 }
 
+function buildUpdateField(label, value, fieldKey) {
+  const raw = (value || '').trim();
+  const safeText = escapeHtml(raw || '—');
+  return `
+    <div class="update-field">
+      <p><strong>${label}:</strong></p>
+      <div class="update-text-wrapper" data-field="${fieldKey}">
+        <div class="update-text-content">${safeText}</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderUpdatesList(updates) {
   const container = document.getElementById('updatesListContainer');
-  const placeholder = document.getElementById('noUpdatesPlaceholder');
   container.innerHTML = '';
   if (!updates.length) {
     container.innerHTML = '<div class="empty-employee" id="noUpdatesPlaceholder"><span><i class="fa-solid fa-clipboard-list"></i></span><h3>No daily updates match the filters.</h3></div>';
@@ -376,16 +391,50 @@ function renderUpdatesList(updates) {
   updates.forEach((u) => {
     const card = document.createElement('div');
     card.className = 'update-card';
+    card.setAttribute('data-db-id', u.dbId);
+    card.setAttribute('data-update-id', u.updateId);
+
+    const isReviewed = u.status === 'reviewed';
+    const statusLabel = isReviewed ? 'Reviewed' : 'Submitted';
+    const statusStyles = isReviewed
+      ? 'background-color:#d1fae5;color:#047857;'
+      : 'background-color:#fee2e2;color:#b91c1c;';
+
+    const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
+
     card.innerHTML = `
       <div class="update-card-header">
         <span class="update-employee-name">${escapeHtml(u.employeeName)}</span>
         <span class="update-employee-id">${escapeHtml(u.employeeId)}</span>
-        <span class="update-date">${escapeHtml(u.date)}</span>
+        <span class="update-date">${escapeHtml(formatUpdateDate(u.date))}</span>
+        <span class="update-status" style="margin-left:auto;padding:2px 10px;border-radius:999px;font-size:12px;${statusStyles}">${statusLabel}</span>
       </div>
       <div class="update-card-body">
-        <p><strong>Work Done:</strong> ${escapeHtml(u.workDone || '—')}</p>
-        <p><strong>Work Planned:</strong> ${escapeHtml(u.workPlanned || '—')}</p>
-        <p><strong>Blockers:</strong> ${escapeHtml(u.blockers || '—')}</p>
+        ${buildUpdateField('Work Done', u.workDone, 'workDone')}
+        ${buildUpdateField('Work Planned', u.workPlanned, 'workPlanned')}
+        ${buildUpdateField('Blockers', u.blockers, 'blockers')}
+      </div>
+      <div class="update-card-comments">
+        <h4>Admin Comments</h4>
+        <div class="comments-list">
+          ${
+            comments.length
+              ? comments
+                  .map(
+                    (c) => `
+            <div class="comment-item" data-comment-id="${c.commentId}">
+              <span class="comment-text">${escapeHtml(c.commentText || '')}</span>
+            </div>`
+                  )
+                  .join('')
+              : '<p class="no-comments">No comments yet.</p>'
+          }
+        </div>
+        <button type="button" class="btn-green add-comment-btn"><span><i class="fa-solid fa-comment-dots"></i></span> Add Comment</button>
+        <div class="add-comment-form" style="display: none; margin-top: 8px;">
+          <textarea class="admin-comment-input" rows="2" placeholder="Add your comment..."></textarea>
+          <button type="button" class="btn-green submit-comment-btn" style="margin-top: 4px;"><span><i class="fa-solid fa-paper-plane"></i></span> Submit Comment</button>
+        </div>
       </div>
     `;
     container.appendChild(card);
@@ -452,3 +501,104 @@ document.getElementById('clearUpdateFilters').addEventListener('click', async ()
   renderUpdatesList(allUpdatesAggregate);
   renderNotSubmittedToday(data);
 });
+
+// Event delegation for admin comments
+const updatesListContainerEl = document.getElementById('updatesListContainer');
+
+if (updatesListContainerEl) {
+  updatesListContainerEl.addEventListener('click', async (e) => {
+    const target = e.target;
+
+    const card = target.closest('.update-card');
+    if (!card) return;
+
+    // Toggle "Add Comment" form visibility
+    const addCommentBtn = target.closest('.add-comment-btn');
+    if (addCommentBtn) {
+      const form = card.querySelector('.add-comment-form');
+      if (!form) return;
+      const isHidden = form.style.display === 'none' || !form.style.display;
+      form.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        const textarea = form.querySelector('.admin-comment-input');
+        if (textarea) textarea.focus();
+      }
+      return;
+    }
+
+    // Submit admin comment
+    const submitCommentBtn = target.closest('.submit-comment-btn');
+    if (submitCommentBtn) {
+      const form = card.querySelector('.add-comment-form');
+      if (!form) return;
+      const textarea = form.querySelector('.admin-comment-input');
+      if (!textarea) return;
+      const commentText = textarea.value.trim();
+      if (!commentText) {
+        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Comment cannot be empty.');
+        return;
+      }
+
+      const dbId = card.getAttribute('data-db-id');
+      const updateId = card.getAttribute('data-update-id');
+      if (!dbId || !updateId) {
+        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Could not identify this update record.');
+        return;
+      }
+
+      showSpinner();
+      try {
+        const employees = await getEmployeeDataFromDatabase();
+        const employeeRecord = employees.find((e) => String(e.id) === String(dbId));
+        if (!employeeRecord || !employeeRecord.employeeData) {
+          createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Employee record not found.');
+          return;
+        }
+
+        const updatesArr = Array.isArray(employeeRecord.employeeData.dailyUpdates)
+          ? employeeRecord.employeeData.dailyUpdates
+          : [];
+        const nowTs = Date.now();
+        const updatedUpdates = updatesArr.map((u) => {
+          if (String(u.updateId) !== String(updateId)) return u;
+          const existingComments = Array.isArray(u.adminComments) ? u.adminComments : [];
+          const newComment = {
+            commentId: nowTs.toString(),
+            commentText,
+            createdAt: nowTs,
+          };
+          return {
+            ...u,
+            status: 'reviewed',
+            adminComments: [...existingComments, newComment],
+          };
+        });
+
+        employeeRecord.employeeData.dailyUpdates = updatedUpdates;
+
+        const updatedAllData = await editEmployeeFromDatabase(employeeRecord.employeeData, employeeRecord.id);
+        allUpdatesAggregate = aggregateAllUpdates(updatedAllData);
+
+        const dateFilter = document.getElementById('filterUpdateDate').value;
+        const employeeFilter = document.getElementById('filterUpdateEmployee').value;
+        const filtered = allUpdatesAggregate.filter((u) => {
+          if (dateFilter && u.date !== dateFilter) return false;
+          if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
+          return true;
+        });
+
+        renderUpdatesList(filtered);
+        renderNotSubmittedToday(updatedAllData);
+
+        textarea.value = '';
+        form.style.display = 'none';
+
+        createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', 'Comment added successfully.');
+      } catch (err) {
+        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', err?.message || 'Failed to add comment.');
+      } finally {
+        hideSpinner();
+      }
+    }
+  });
+}

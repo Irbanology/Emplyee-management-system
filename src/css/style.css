@@ -41,8 +41,8 @@ body {
 /* Sidebar Styles */
 .sidebar {
   position: relative;
-  width: 300px;
-  min-width: 300px;
+  width: 260px;
+  min-width: 260px;
   background-color: #1B1B1B;
   color: #fff;
   overflow: hidden;
@@ -255,7 +255,9 @@ body {
 .content {
   height: 100%;
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .content .employee-btns {
@@ -558,14 +560,17 @@ footer p {
   flex-direction: column;
   gap: 16px;
   max-height: 70vh;
+  min-height: 200px;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 4px 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .update-card {
   background-color: #222;
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   border-left: 4px solid #757FF9;
   transition: box-shadow 0.2s ease;
@@ -621,6 +626,72 @@ footer p {
   margin-right: 6px;
 }
 
+/* Update field: full content in scrollable area */
+.update-field {
+  margin-bottom: 12px;
+}
+
+.update-field:last-child {
+  margin-bottom: 0;
+}
+
+.update-field p {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  color: #989797;
+}
+
+.update-text-wrapper {
+  width: 100%;
+}
+
+.update-text-content {
+  padding: 8px 10px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #e0e0e0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Comments area: scrollable list */
+.update-card-comments {
+  padding: 12px 16px;
+  border-top: 1px solid #333;
+  background-color: #252525;
+}
+
+.update-card-comments h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #989797;
+  font-weight: 600;
+}
+
+.comments-list {
+  padding: 8px 0;
+  margin-bottom: 10px;
+}
+
+.comment-item {
+  padding: 6px 0;
+  font-size: 13px;
+  color: #e0e0e0;
+  border-bottom: 1px solid #333;
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.no-comments {
+  margin: 0;
+  font-size: 13px;
+  color: #6b6b6b;
+}
+
 .sidebar .daily-updates-tab i {
   margin-right: 8px;
 }
@@ -653,12 +724,19 @@ footer p {
 
 /* Shared button styling (e.g. Daily Updates filters) */
 .btn-green {
+  border-radius: 10px;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-green:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* Update card comment buttons */
+.update-card-comments .add-comment-btn,
+.update-card-comments .submit-comment-btn {
+  border-radius: 10px;
 }
 
 /* Modal Styles */
