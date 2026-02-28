@@ -1,68 +1,87 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
-
-/* General Reset */
+/* Employee Dashboard – SaaS-style UI (Poppins, glass, compact cards) */
+/* Typography: Poppins globally */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 *::-webkit-scrollbar {
   width: 6px;
-  background-color: #383737;
+  background-color: #1e1e1e;
 }
 
 *::-webkit-scrollbar-thumb {
   width: 6px;
-  background-color: #989797;
+  background-color: #5a5a5a;
   border-radius: 6px;
 }
 
-body {
-    background-color: #121212;
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #757FF9;
 }
 
-/* Profile Container */
-.profile-container {
-  width: 100%;
+body {
+  background: linear-gradient(160deg, #0f0f12 0%, #1a1a22 50%, #12121a 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #e4e4e7;
+}
+
+/* Dashboard wrapper: only updates feed scrolls */
+.employee-dashboard {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 95%;
   max-width: 1200px;
   margin: 0 auto;
-  margin-top: 15px;
-  background-color: #414040;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px 0;
+  gap: 20px;
 }
 
-/* Cover Photo */
+/* ----- 1. Profile Header (Top) ----- */
+.profile-container {
+  flex-shrink: 0;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(55, 55, 65, 0.7) 0%, rgba(35, 35, 45, 0.85) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
 .cover-video video {
   width: 100%;
-  height: 300px;
+  height: 200px;
   object-fit: cover;
 }
 
-/* Profile Section */
 .profile-section {
   display: flex;
   align-items: center;
-  padding: 20px;
-  gap: 20px;
+  padding: 24px 28px;
+  gap: 24px;
   position: relative;
-  background-color: #222;
+  background: linear-gradient(180deg, rgba(30, 30, 36, 0.6) 0%, rgba(22, 22, 28, 0.9) 100%);
   color: #fff;
 }
 
-/* Profile Photo */
 .profile-photo {
-  width: 150px;
-  height: 150px;
-  border: 4px solid #fff;
+  width: 120px;
+  height: 120px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   overflow: hidden;
   position: absolute;
-  top: -75px; /* Half of the profile photo height */
-  left: 20px;
+  top: -60px;
+  left: 28px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .profile-photo img {
@@ -71,99 +90,147 @@ body {
   object-fit: cover;
 }
 
-/* Profile Info */
 .profile-info {
-  margin-left: 180px; /* Leave space for profile photo */
+  margin-left: 160px;
 }
 
 .employee-name {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.employee-department {
-  font-size: 16px;
-  margin-top: 8px;
-}
-
-/* Edit Profile Button */
-.edit-profile-btn{
-    background-color: #42DEDF;
-    color: #1a1a1a;
-    font-size: 12px;
-    padding: 10px 45px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-left: auto;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.edit-profile-btn:hover {
-  background-color: #757FF9;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: #fff;
 }
 
+.employee-department {
+  font-size: 0.9rem;
+  font-weight: 400;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.75);
+}
 
-/* Daily Work Update section */
+.edit-profile-btn {
+  background: linear-gradient(135deg, #42DEDF 0%, #38c8c9 100%);
+  color: #0f0f12;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  margin-left: auto;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edit-profile-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(66, 222, 223, 0.4);
+  background: linear-gradient(135deg, #757FF9 0%, #636bf0 100%);
+  color: #fff;
+}
+
+.edit-profile-btn:active {
+  transform: translateY(0);
+}
+
+
+/* ----- 2. Submit Update Card (Middle) – compact ----- */
 .daily-update-section {
-  width: 95%;
-  max-width: 1200px;
-  margin: 20px auto;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .daily-update-card {
-  background-color: #222;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background: rgba(28, 28, 34, 0.85);
+  border-radius: 14px;
+  padding: 20px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .daily-update-card h2 {
-  margin-bottom: 8px;
-  font-size: 22px;
+  margin-bottom: 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #fff;
 }
 
 .daily-update-hint {
-  font-size: 13px;
-  color: #989797;
-  margin-bottom: 20px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 16px;
 }
 
 .daily-update-form .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   text-align: left;
+}
+
+.daily-update-form .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .daily-update-form textarea {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #444;
-  border-radius: 5px;
-  background-color: #333;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(40, 40, 48, 0.8);
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  font-weight: 300;
   resize: vertical;
+  min-height: 72px;
+  max-height: 140px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.daily-update-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .daily-update-form textarea:focus {
   border-color: #42DEDF;
   outline: none;
-  box-shadow: 0 0 5px rgba(66, 222, 223, 0.3);
+  box-shadow: 0 0 0 3px rgba(66, 222, 223, 0.2);
 }
 
 .daily-update-form .save-btn {
-  margin-top: 10px;
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #42DEDF 0%, #38c8c9 100%);
+  color: #0f0f12;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.daily-update-form .save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(66, 222, 223, 0.4);
+  background: linear-gradient(135deg, #757FF9 0%, #636bf0 100%);
+  color: #fff;
+}
+
+.daily-update-form .save-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .daily-update-status {
-  margin-top: 12px;
-  font-size: 14px;
-  color: #989797;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .daily-update-status.submitted {
@@ -171,59 +238,74 @@ body {
 }
 
 .daily-update-form button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* My Updates (employee view: past updates + admin comments) */
+/* ----- 3. Updates Feed (Bottom) – only this section scrolls ----- */
 .my-updates-section {
-  width: 95%;
-  max-width: 1200px;
-  margin: 20px auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .my-updates-card {
-  background-color: #222;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(28, 28, 34, 0.85);
+  border-radius: 14px;
+  padding: 18px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .my-updates-card h2 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: #fff;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .my-updates-hint {
-  font-size: 14px;
-  color: #989797;
-  margin-bottom: 16px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .my-updates-empty {
-  color: #989797;
-  font-size: 14px;
-  padding: 16px 0;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.9rem;
+  font-weight: 400;
+  padding: 24px 0;
+  text-align: center;
 }
 
-/* Scrollable feed */
+/* Scrollable feed – ONLY this area scrolls */
 .updates-container {
-  max-height: 400px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 4px;
+  padding-right: 6px;
 }
 
-/* Compact notification-style cards */
+/* Notification-style cards */
 .update-card {
-  background: #1f1f1f;
-  border-radius: 14px;
-  padding: 12px;
+  background: rgba(38, 38, 45, 0.9);
+  border-radius: 12px;
+  padding: 14px 16px;
   margin-bottom: 10px;
   cursor: pointer;
-  transition: 0.2s;
-  border-left: 4px solid #42DEDF;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .update-card:last-child {
@@ -231,53 +313,60 @@ body {
 }
 
 .update-card:hover {
-  background: #2a2a2a;
+  background: rgba(48, 48, 56, 0.95);
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.update-card:active {
+  transform: translateY(0);
 }
 
 .update-card .top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
 .update-card .date {
-  font-size: 13px;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #e0e0e0;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .update-card .status {
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 0.7rem;
   font-weight: 600;
+  text-transform: capitalize;
 }
 
 .update-card .status.submitted {
-  background-color: rgba(234, 179, 8, 0.35);
+  background: rgba(234, 179, 8, 0.25);
   color: #facc15;
 }
 
 .update-card .status.reviewed {
-  background-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.25);
   color: #4ade80;
 }
 
 .update-card .preview {
   margin: 0;
-  font-size: 12px;
-  color: #989797;
-  line-height: 1.4;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* Full update detail modal */
+/* ----- Update detail modal (fade + scale) ----- */
 .update-detail-modal {
   display: none;
   position: fixed;
@@ -287,60 +376,79 @@ body {
   justify-content: center;
   padding: 20px;
   box-sizing: border-box;
+  pointer-events: none;
 }
 
 .update-detail-modal.active {
   display: flex;
+  pointer-events: auto;
 }
 
 .update-detail-backdrop {
   position: absolute;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.update-detail-modal.active .update-detail-backdrop {
+  opacity: 1;
 }
 
 .update-detail-content {
   position: relative;
-  background: #222;
-  border-radius: 14px;
+  background: rgba(28, 28, 34, 0.98);
+  border-radius: 16px;
   max-width: 520px;
   width: 100%;
   max-height: 85vh;
   overflow-y: auto;
-  padding: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.update-detail-modal.active .update-detail-content {
+  transform: scale(1);
+  opacity: 1;
 }
 
 .update-detail-close {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 14px;
+  right: 14px;
   width: 36px;
   height: 36px;
   border: none;
-  background: #333;
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
-  border-radius: 8px;
-  transition: background 0.2s;
+  border-radius: 10px;
+  transition: background 0.2s ease;
 }
 
 .update-detail-close:hover {
-  background: #444;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .update-detail-title {
-  margin: 0 0 16px 0;
+  margin: 0 0 18px 0;
   padding-right: 44px;
   font-size: 1.1rem;
+  font-weight: 700;
   color: #fff;
 }
 
 .update-detail-body {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .update-detail-section {
@@ -352,20 +460,21 @@ body {
 }
 
 .update-detail-label {
-  margin: 0 0 4px 0;
-  font-size: 12px;
+  margin: 0 0 6px 0;
+  font-size: 0.7rem;
   font-weight: 600;
-  color: #989797;
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
 }
 
 .update-detail-text {
-  padding: 10px 12px;
-  background: #1a1a1a;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #e0e0e0;
+  padding: 12px 14px;
+  background: rgba(40, 40, 48, 0.8);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: #e4e4e7;
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -380,13 +489,14 @@ body {
 }
 
 .update-detail-comment {
-  padding: 10px 12px;
+  padding: 12px 14px;
   margin-bottom: 8px;
-  background: #1a1a1a;
-  border-radius: 8px;
+  background: rgba(40, 40, 48, 0.8);
+  border-radius: 10px;
   border-left: 4px solid #757FF9;
-  font-size: 13px;
-  color: #e0e0e0;
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: #e4e4e7;
   line-height: 1.5;
 }
 
@@ -396,8 +506,8 @@ body {
 
 .update-detail-no-comments {
   margin: 0;
-  font-size: 13px;
-  color: #6b6b6b;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* EMPTY-EMPLOYEE DIV STYLING */
@@ -424,30 +534,32 @@ body {
 }
 
 
-/* Employee Info Section */
+/* Employee Info Section (below dashboard) */
 .employee-info-section {
   width: 95%;
   max-width: 1200px;
-  background-color: #222;
-  margin: 20px auto;
-  padding: 15px;
-  border-radius: 8px;
+  margin: 0 auto 20px;
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(28, 28, 34, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .employee-info-card {
-  background-color: #2d2c2c;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background: transparent;
+  border-radius: 0;
   overflow: hidden;
 }
 
 .employee-info-header {
-  background-color: #757FF9;
+  background: linear-gradient(135deg, #757FF9 0%, #636bf0 100%);
   color: #fff;
-  padding: 15px;
+  padding: 16px;
   text-align: center;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 
 .employee-info-body {
@@ -458,8 +570,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #e9ecef;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .employee-info-row:last-child {
@@ -467,82 +579,74 @@ body {
 }
 
 .info-label {
-  font-weight: bold;
-  color: #fff;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
   width: 30%;
+  font-size: 0.9rem;
 }
 
 .info-value {
-  font-size: 16px;
-  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.85);
   width: 70%;
   text-align: right;
 }
 
-
-/* FOOTER DESIGN */
+/* Footer */
 footer {
   width: 95%;
-  height: 100px;
-  margin: 0 auto;
-  margin-bottom: 20px;
   max-width: 1200px;
-  background-color: #222;
+  margin: 0 auto 24px;
+  padding: 18px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-inline: 30px;
-  text-align: center;
-  border-radius: 8px;
+  background: rgba(28, 28, 34, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  flex-shrink: 0;
 }
 
 footer p {
-    color: #fff;
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: capitalize;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 footer .logout {
-    background-color: #de4a4a;
-    color: #fff;
-    font-size: 12px;
-    padding: 8px 15px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background-color 500ms, scale 500ms cubic-bezier(0.075, 0.82, 0.165, 1);
+  background: linear-gradient(135deg, #de4a4a 0%, #c93c3c 100%);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
-
 
 footer .logout:hover {
-  background-color: #e31f1f;
-  scale: 1.1;
-  
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(222, 74, 74, 0.4);
 }
 
 
-/* Modal Styles */
+/* Edit Profile Modal */
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: none;
   visibility: hidden;
   justify-content: center;
   align-items: center;
   z-index: 500;
-  animation: fadeIn 0.3s ease-in-out;
+  padding: 20px;
 }
-
 
 .modal.active {
   display: flex;
@@ -550,75 +654,74 @@ footer .logout:hover {
 }
 
 .modal-content {
-  background: #373535;
-  border-radius: 8px;
-  padding: 20px;
+  background: rgba(28, 28, 34, 0.98);
+  border-radius: 16px;
+  padding: 24px;
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
   text-align: center;
-  animation: scaleUp 0.3s ease-in-out;
+  animation: modalScaleIn 0.25s ease-out;
 }
 
 .modal-content h2 {
   margin-bottom: 20px;
-  font-size: 20px;
-  color: #afafaf;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
 }
 
-
-/* Animations */
-@keyframes fadeIn {
+@keyframes modalScaleIn {
   from {
-    background-color: rgba(0, 0, 0, 0);
-  }
-  to {
-    background-color: rgba(0, 0, 0, 0.8);
-  }
-}
-
-@keyframes scaleUp {
-  from {
-    transform: scale(0.8);
+    transform: scale(0.95);
+    opacity: 0;
   }
   to {
     transform: scale(1);
+    opacity: 1;
   }
 }
 
-
-/* Form Group Styles */
+/* Form group (shared: modal + daily form) */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   text-align: left;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
-  color: #dfdede;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .form-group input[type="text"] {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  border: none;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   outline: none;
-  background-color: #595959b0;
+  background: rgba(40, 40, 48, 0.8);
   color: #fff;
-  font-size: 14px;
+  font-size: 0.9rem;
+  font-weight: 300;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input[type="text"]:focus {
+  border-color: #42DEDF;
+  box-shadow: 0 0 0 3px rgba(66, 222, 223, 0.2);
 }
 
 .form-group input[type="text"]::placeholder {
-  color: #d9d7d7ee;
+  color: rgba(255, 255, 255, 0.35);
 }
 
-/* Profile Picture Upload */
+/* Profile Picture Upload (Edit Profile modal) */
 .profile-pic-upload {
-  margin: 20px 0;
+  margin: 18px 0;
 }
 
 .upload-area {
@@ -626,36 +729,35 @@ footer .logout:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border: 2px dashed #42DEDF;
-  border-radius: 8px;
-  padding: 87px;
+  border: 2px dashed rgba(66, 222, 223, 0.5);
+  border-radius: 12px;
+  padding: 60px 24px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
   position: relative;
-
 }
 
 .upload-area:hover {
-  background-color: rgba(66, 222, 223, 0.1);
+  background: rgba(66, 222, 223, 0.08);
+  border-color: #42DEDF;
 }
 
 .upload-area .closeImg {
   position: absolute;
-  top: 3px;
-  right: 5px;
+  top: 8px;
+  right: 8px;
   color: #fff;
   z-index: 500;
   display: none;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  padding: 1px;
-  padding-left: 2px;
-  transition: background-color 300ms ease-out;
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  transition: background 0.2s ease;
 }
 
 .upload-area .closeImg:hover {
-    background-color: rgba(43, 43, 43, 0.796);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .upload-area img {
@@ -666,91 +768,116 @@ footer .logout:hover {
 }
 
 .upload-icon {
-  font-size: 40px;
+  font-size: 2rem;
   color: #42DEDF;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .upload-text {
-  font-size: 14px;
-  color: #d7d6d6;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Form Actions */
 .form-actions {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .form-actions .btn {
-  padding: 10px 15px;
+  flex: 1;
+  padding: 12px 16px;
   border: none;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  width: 48%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-actions .btn{
-    color: #fff;
-    font-size: 12px;
-    padding: 8px 9px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-top: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+.form-actions .save-btn {
+  background: linear-gradient(135deg, #42DEDF 0%, #38c8c9 100%);
+  color: #0f0f12;
+}
+
+.form-actions .save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(66, 222, 223, 0.35);
+  background: linear-gradient(135deg, #757FF9 0%, #636bf0 100%);
+  color: #fff;
+}
+
+.form-actions .cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.form-actions .cancel-btn:hover {
+  background: rgba(220, 53, 69, 0.9);
+  transform: translateY(-1px);
 }
 
 .save-btn {
-  background-color: #42DEDF;
-  color: #1a1a1a;
+  background: linear-gradient(135deg, #42DEDF 0%, #38c8c9 100%);
+  color: #0f0f12;
   border-radius: 10px;
 }
 
 .save-btn:hover {
-  background-color: #757FF9;
+  background: linear-gradient(135deg, #757FF9 0%, #636bf0 100%);
   color: #fff;
 }
 
 .cancel-btn {
-  background-color: #dc3545;
-  color: white;
+  background: rgba(220, 53, 69, 0.9);
+  color: #fff;
 }
 
 .cancel-btn:hover {
-  background-color: #c21b2c;
+  background: #c21b2c;
 }
 
 
 
 
 
-/* Responsive Design */
+/* ----- Responsive ----- */
 @media (min-width: 1400px) {
-  .profile-container,
+  .employee-dashboard {
+    max-width: 1400px;
+  }
+
   .employee-info-section,
   footer {
-    max-width: 1600px;
+    max-width: 1400px;
   }
 }
 
-
 @media (max-width: 768px) {
+  .employee-dashboard {
+    width: 98%;
+    padding: 12px 0;
+    gap: 16px;
+  }
 
-    
+  .profile-container .cover-video video {
+    height: 160px;
+  }
+
   .profile-section {
     flex-direction: column;
     align-items: center;
-    padding: 40px 20px;
+    padding: 32px 20px 24px;
   }
 
   .profile-photo {
     position: static;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    width: 100px;
+    height: 100px;
   }
 
   .profile-info {
@@ -758,46 +885,34 @@ footer .logout:hover {
     text-align: center;
   }
 
+  .employee-name {
+    font-size: 1.3rem;
+  }
+
   .edit-profile-btn {
     margin-left: 0;
-    margin-top: 20px;
-  }
-}
-
-
-
-@media (max-width: 480px) {
-  .employee-info-row {
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
+    margin-top: 12px;
   }
 
-  .info-label {
-    width: 100%;
-    margin-bottom: 5px;
+  .daily-update-card {
+    padding: 16px 18px;
   }
 
-  .info-value {
-    width: 100%;
+  .daily-update-card h2 {
+    font-size: 1.1rem;
   }
-}
 
-/* My Updates & Daily Update – responsive */
-@media (max-width: 768px) {
-  .my-updates-section,
-  .daily-update-section {
-    width: 98%;
-    margin-left: auto;
-    margin-right: auto;
+  .daily-update-form textarea {
+    min-height: 68px;
+    max-height: 120px;
   }
 
   .my-updates-card {
-    padding: 16px;
+    padding: 14px 18px;
   }
 
-  .updates-container {
-    max-height: 360px;
+  .my-updates-card h2 {
+    font-size: 1.05rem;
   }
 
   .update-card .top {
@@ -805,68 +920,99 @@ footer .logout:hover {
   }
 
   .update-card .date {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .update-card .status {
-    font-size: 10px;
+    font-size: 0.65rem;
     padding: 3px 8px;
   }
 
   .update-card .preview {
-    font-size: 11px;
+    font-size: 0.75rem;
   }
 
   .update-detail-content {
-    padding: 16px;
+    padding: 18px;
     max-height: 90vh;
   }
 
-  .daily-update-card {
-    padding: 16px;
-  }
-
-  .daily-update-form textarea {
-    min-height: 80px;
+  .employee-info-section,
+  footer {
+    width: 98%;
   }
 }
 
 @media (max-width: 480px) {
-  .my-updates-section,
-  .daily-update-section {
+  .employee-dashboard {
     width: 100%;
-    padding-left: 8px;
-    padding-right: 8px;
+    padding: 10px 0;
   }
 
+  .profile-section {
+    padding: 24px 16px;
+  }
+
+  .daily-update-card,
   .my-updates-card {
-    padding: 12px;
-    border-radius: 6px;
+    padding: 14px 16px;
+    border-radius: 12px;
   }
 
   .my-updates-card h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .update-card {
+    padding: 12px 14px;
     border-radius: 10px;
-    padding: 10px;
   }
 
   .update-card .date {
-    font-size: 11px;
+    font-size: 0.7rem;
   }
 
   .update-card .preview {
-    font-size: 11px;
+    font-size: 0.7rem;
   }
 
   .update-detail-content {
-    padding: 14px;
+    padding: 16px;
   }
 
   .update-detail-text {
-    font-size: 13px;
+    font-size: 0.85rem;
+  }
+
+  .employee-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 4px;
+  }
+
+  .info-label {
+    width: 100%;
+    margin-bottom: 2px;
+  }
+
+  .info-value {
+    width: 100%;
+    text-align: left;
+  }
+
+  .employee-info-section,
+  footer {
+    width: 100%;
+    margin-left: 8px;
+    margin-right: 8px;
+    max-width: calc(100% - 16px);
+  }
+
+  footer {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
   }
 }
 

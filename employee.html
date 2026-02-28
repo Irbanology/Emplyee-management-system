@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <title>Employee Profile</title>
   <link rel="stylesheet" href="./src/css/toast.css">
@@ -11,6 +14,7 @@
   <link rel="stylesheet" href="./src/css/spiner.css">
 </head>
 <body>
+  <main class="employee-dashboard">
   <div class="profile-container">
     <!-- Cover Photo -->
     <div class="cover-video">
@@ -37,15 +41,15 @@
       <form id="dailyUpdateForm" class="daily-update-form">
         <div class="form-group">
           <label for="workDoneToday">Work Done Today <span>*</span></label>
-          <textarea id="workDoneToday" name="workDoneToday" rows="4" placeholder="What did you complete today?" required></textarea>
+          <textarea id="workDoneToday" name="workDoneToday" rows="3" placeholder="What did you complete today?" required></textarea>
         </div>
         <div class="form-group">
           <label for="workPlannedNext">Work Planned Next <span>*</span></label>
-          <textarea id="workPlannedNext" name="workPlannedNext" rows="4" placeholder="What do you plan to do next?" required></textarea>
+          <textarea id="workPlannedNext" name="workPlannedNext" rows="3" placeholder="What do you plan to do next?" required></textarea>
         </div>
         <div class="form-group">
           <label for="blockers">Any Blockers <span>*</span></label>
-          <textarea id="blockers" name="blockers" rows="2" placeholder='e.g. None / Waiting on design' required></textarea>
+          <textarea id="blockers" name="blockers" rows="2" placeholder="e.g. None / Waiting on design" required></textarea>
         </div>
         <button type="submit" class="btn save-btn" id="submitDailyUpdateBtn"><span><i class="fa-solid fa-paper-plane"></i></span> Submit Update</button>
       </form>
@@ -62,6 +66,7 @@
       </div>
     </div>
   </section>
+  </main>
 
   <!-- Full update detail modal -->
   <div class="update-detail-modal" id="updateDetailModal" aria-hidden="true">
@@ -146,5 +151,3 @@
   <script type="module" src="./src/js/employee.js"></script>
 </body>
 </html>
-
-
