@@ -4,6 +4,7 @@
 // CREATE TOAST HERE;
 const notifications = document.querySelector('.notifications');
 const createToastForNotification = function (type, icon, title, text){
+    if (!notifications) return;
     let newToast = document.createElement('div');
     newToast.innerHTML = `
         <div class="toast ${type}">
@@ -12,12 +13,16 @@ const createToastForNotification = function (type, icon, title, text){
             <div class="title">${title}</div>
             <span>${text}</span>
             </div>
-            <i class="fa-solid fa-xmark" onclick="(this.parentElement).remove()"></i>
+            <i class="fa-solid fa-xmark" aria-label="Close notification" role="button"></i>
         </div>`;
     notifications.appendChild(newToast);
+    const closeBtn = newToast.querySelector('.fa-xmark');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => newToast.remove());
+    }
     newToast.timeOut = setTimeout(
         ()=>newToast.remove(), 5000
-    )
+    );
 }
 
 // Format date string (YYYY-MM-DD) as "Fri, 27 Feb 2026"

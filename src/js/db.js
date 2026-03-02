@@ -128,6 +128,9 @@ const updateProfileData = async (userName, image, employeeId) => {
   const currentEmployee = await getEmployeeDataFromDatabase();
 
   const findEmployee = currentEmployee.find((data) => data.id === employeeId);
+  if (!findEmployee || !findEmployee.employeeData) {
+    throw new Error('Employee not found.');
+  }
 
   if (image) {
     findEmployee.employeeData.profilePicture = fileData.fullPath;

@@ -115,8 +115,13 @@ closeModal.addEventListener("click", () => {
 window.addEventListener("click", (e) => {
   if (e.target === modal) {
     modal.classList.remove('active');
-    form.querySelector('.btn-green').textContent = 'Add Employee';
+    const btn = form.querySelector('.btn-green');
+    if (btn) btn.innerHTML = '<span><i class="fa-solid fa-user-plus"></i></span> Add Employee';
     form.removeAttribute('data-edit-id');
+    document.querySelector('#email')?.removeAttribute('readonly');
+    document.querySelector('#password')?.removeAttribute('readonly');
+    const employeeIdInput = document.querySelector('#employeeId');
+    if (employeeIdInput) employeeIdInput.removeAttribute('readonly');
     form.reset();
   } else if (e.target === employeeModal) {
     employeeModal.classList.remove('active');

@@ -15,10 +15,9 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   }
 
-
   .toggle-btn {
-      display: block;
-      visibility: visible;
+    display: block;
+    visibility: visible;
   }
 
   .sidebar > span {
@@ -26,8 +25,77 @@
     visibility: visible;
   }
 
-   .modal-content {
-     min-width: 97%;
+  /* Admin header – mobile enhanced */
+  .admin-header {
+    padding: 12px 16px 12px 14px;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-top: max(12px, env(safe-area-inset-top));
+    gap: 10px;
+    min-height: 56px;
+    border-radius: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .admin-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: auto;
+    max-width: calc(100% - 120px);
+    line-height: 1.25;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .logout-title {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .toggle-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .logout-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+
+  /* Admin footer – mobile enhanced */
+  footer {
+    margin-top: 16px;
+    padding: 14px 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    min-height: 56px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+
+  footer p {
+    font-size: 0.9rem;
+    letter-spacing: 0.3px;
+  }
+
+  .main-content {
+    padding: 12px 14px 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .modal-content {
+    width: 97%;
+    max-width: 97%;
+    padding: 20px 24px;
   }
 
   /* Daily Updates section – responsive */
@@ -86,16 +154,19 @@
 
 
 @media (max-width: 700px) {
-    .modal-content {
-        min-width: 95%;
-    }
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    padding: 20px 24px;
+  }
 
-    .admin-header h2 {
-      width: 43%;
-      /* overflow: hidden;
-      text-overflow: ellipsis;
-      text-wrap: nowrap; */
-    }
+  .admin-header h2 {
+    font-size: 1rem;
+    max-width: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 @media (max-width: 500px) {
@@ -117,11 +188,12 @@
   }
 
   .form-group textarea {
-        min-width: 70%;
+        min-width: 0;
+        width: 100%;
     }
 
-    .form-group select {
-    width: 106%;
+  .form-group select {
+    width: 100%;
   }
 
   .profile-section p {
@@ -133,13 +205,13 @@
   }
 
   .details h2 {
-    font-size: 1.3em;
-}
+    font-size: 1.2em;
+    margin-left: 0;
+  }
 
- .details strong {
+  .details strong {
     margin-right: 2px;
-
- }
+  }
 
 
   .btns {
@@ -162,43 +234,46 @@
 
 
 @media (max-width: 380px) {
+  .modal button, .employee-btns button {
+    font-size: 0.75rem;
+    padding: 8px 12px;
+  }
 
-   .modal button, .employee-btns button {
-      font-size: 0.7rem;
-    }
+  .modal-content {
+    width: 92%;
+    max-width: 92%;
+    padding: 16px 20px;
+  }
 
-    .modal-content {
-        min-width: 90%;
-    }
-
-   .employee-card {
-    width: 97%;
-   }
+  .employee-card {
+    width: 100%;
+    min-width: 0;
+  }
 
   .employee-department {
     width: 100%;
   }
 
-    .profile-section {
-        margin: -50px;
-    }
+  .profile-section {
+    margin-top: -50px;
+  }
 
-    .profile-section img {
-        width: 80px;
-        height: 80px;
-    }
+  .profile-section img {
+    width: 80px;
+    height: 80px;
+  }
 
   .profile-section h1 {
     font-weight: 500;
-    font-size: 2em;
+    font-size: 1.35em;
     margin: 5px 0;
   }
 
   .details h2 {
     font-size: 1em;
-    margin-top: 62px;
-    margin-left: -16px;
-}
+    margin-top: 16px;
+    margin-left: 0;
+  }
 
  .details ul {
     padding-left: 10px
@@ -219,18 +294,32 @@
 
 
 @media (max-width: 340px) {
-
   .sidebar {
     width: 90%;
   }
 
   .main-content {
-    padding: 8px;
+    padding: 8px 10px 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 
-  .admin-header { justify-content: flex-end; }
+  .admin-header {
+    justify-content: flex-end;
+    padding: 10px 12px;
+  }
 
-  .admin-header > h2 { display: none; }
+  .admin-header > h2 {
+    display: none;
+  }
+
+  footer {
+    padding: 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  footer p {
+    font-size: 0.8rem;
+  }
 }
 
 
