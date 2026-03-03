@@ -105,7 +105,8 @@ function showLoading(text) {
       <p>${safeText}</p>
     </div>`;
     if (document.body) document.body.appendChild(loadingWrapper);
-    loadingTimeout = setTimeout(() => hideLoading(), 3000);
+    // Fallback: hide after 5s if caller never calls hideLoading (e.g. slow or stuck load)
+    loadingTimeout = setTimeout(() => hideLoading(), 5000);
   } catch (err) {
     console.error('showLoading:', err);
   }
@@ -135,6 +136,7 @@ export {
   showSpinner,
   hideSpinner,
   showLoading,
+  hideLoading,
   getErrorMessage,
   DEFAULT_ERROR_MESSAGE,
 };

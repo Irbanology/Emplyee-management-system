@@ -1,6 +1,6 @@
 // IMPORT ALL MODULES...
 import { getCurrentUser, getEmployeeDataFromDatabase, editEmployeeFromDatabase, updateProfileData, supabaseUrl, logout, checkUserLoginOrNot } from "./db.js";
-import { createToastForNotification, formatUpdateDate, formatUpdateDateShort, getErrorMessage, hideSpinner, showSpinner, showLoading } from "./utils.js";
+import { createToastForNotification, formatUpdateDate, formatUpdateDateShort, getErrorMessage, hideLoading, hideSpinner, showSpinner, showLoading } from "./utils.js";
 import { validateDailyUpdateForm } from "./validate.js";
 
 
@@ -107,6 +107,8 @@ const showUserData = async () => {
   } catch (err) {
     console.error('showUserData:', err);
     createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Failed to load profile.'));
+  } finally {
+    hideLoading();
   }
 };
 
@@ -290,31 +292,23 @@ function closeUpdateDetailModal() {
   }
 }
 
-// Delegated click and keyboard for update cards
+// Delegated click for update cards + modal close
 const myUpdatesListEl = document.getElementById('myUpdatesList');
 if (myUpdatesListEl) {
   myUpdatesListEl.addEventListener('click', (e) => {
     const card = e.target.closest('.update-card');
-    if (!card) return;
-    const updateId = card.getAttribute('data-update-id');
-    if (updateId) openUpdateDetailModal(updateId);
-  });
-  myUpdatesListEl.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    const card = e.target.closest('.update-card');
-    if (!card) return;
-    e.preventDefault();
-    const updateId = card.getAttribute('data-update-id');
-    if (updateId) openUpdateDetailModal(updateId);
+    if (card) {
+      const updateId = card.getAttribute('data-update-id');
+      if (updateId) openUpdateDetailModal(updateId);
+      return;
+    }
   });
 }
 
 document.getElementById('updateDetailClose')?.addEventListener('click', closeUpdateDetailModal);
 document.querySelector('.update-detail-backdrop')?.addEventListener('click', closeUpdateDetailModal);
 document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  const modal = document.getElementById('updateDetailModal');
-  if (modal?.classList.contains('active')) closeUpdateDetailModal();
+  if (e.key === 'Escape') closeUpdateDetailModal();
 });
 
 // PREVIEW IMG CODE FOR SHOW EMPLOYEE PROFILE IMG PREVIEW...
@@ -367,11 +361,6 @@ if (profileForm) {
       }
     }
 
-    if (!employeId) {
-      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Profile could not be updated. Please refresh the page.');
-      return;
-    }
-
     showSpinner();
     try {
       const { findEmployee, errors } = await updateProfileData(fullName, profilePictureName, employeId);
@@ -403,7 +392,7 @@ if (profileForm) {
 if (dailyUpdateForm) {
   dailyUpdateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const updateText = dailyUpdateForm.querySelector('#todayUpdate')?.value?.trim() ?? '';
+    const updateText = dailyUpdateForm.querySelector('#todayUpdate').value.trim();
 
     if (!validateDailyUpdateForm(updateText)) return;
     if (!currentEmployeeDataRef?.length) {
@@ -417,31 +406,30 @@ if (dailyUpdateForm) {
       return;
     }
 
-    if (submitDailyUpdateBtn) submitDailyUpdateBtn.disabled = true;
+    const nowTs = Date.now();
+    const updateEntry = {
+      updateId: nowTs.toString(),
+      date: today,
+      updateText,
+      createdAt: nowTs,
+      status: 'submitted',
+      adminComments: [],
+    };
+
+    const record = currentEmployeeDataRef[0];
+    record.employeeData.dailyUpdates = record.employeeData.dailyUpdates || [];
+    record.employeeData.dailyUpdates.push(updateEntry);
+
     showSpinner();
     try {
-      const nowTs = Date.now();
-      const updateEntry = {
-        updateId: nowTs.toString(),
-        date: today,
-        updateText,
-        createdAt: nowTs,
-        status: 'submitted',
-        adminComments: [],
-      };
-
-      const record = currentEmployeeDataRef[0];
-      record.employeeData.dailyUpdates = record.employeeData.dailyUpdates || [];
-      record.employeeData.dailyUpdates.push(updateEntry);
-
       await editEmployeeFromDatabase(record.employeeData, record.id);
       currentEmployeeDataRef = [{ ...record, employeeData: { ...record.employeeData } }];
       updateDailyUpdateUI(currentEmployeeDataRef);
       renderMyUpdates(currentEmployeeDataRef);
       dailyUpdateForm.reset();
+      submitDailyUpdateBtn.disabled = true;
       createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', 'Daily update submitted successfully!');
     } catch (err) {
-      if (submitDailyUpdateBtn) submitDailyUpdateBtn.disabled = false;
       createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Failed to submit update.'));
     } finally {
       hideSpinner();

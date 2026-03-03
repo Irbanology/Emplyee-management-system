@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="shortcut icon" href="./assets/images/favico.png" type="image/x-icon">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <title>Employee Profile</title>
@@ -19,7 +19,7 @@
   <div class="profile-container">
     <!-- Cover Photo -->
     <div class="cover-video">
-      <video src="./assets/videos/cover-video.mp4" muted autoplay loop></video>
+      <video src="./assets/videos/cover-video.mp4" muted autoplay loop playsinline preload="metadata"></video>
     </div>
 
     <!-- Profile Section -->
@@ -31,7 +31,6 @@
         <h1 class="employee-name"></h1>
         <p class="employee-department">Department: <span class="IT"></span></p>
       </div>
-      <button class="edit-profile-btn">Edit Profile</button>
     </div>
   </div>
 
@@ -60,37 +59,6 @@
       </div>
     </div>
   </section>
-
-  <section class="employee-info-section">
-    <div class="employee-info-card">
-      <div class="employee-info-header">
-        <h2>Your Personal Information</h2>
-      </div>
-      <div class="employee-info-body">
-        <div class="employee-info-row">
-          <span class="info-label">Name:</span>
-          <span class="info-value fullName">John Doe</span>
-        </div>
-        <div class="employee-info-row">
-          <span class="info-label">Email:</span>
-          <span class="info-value email">johndoe@example.com</span>
-        </div>
-        <div class="employee-info-row">
-          <span class="info-label">Joining Date:</span>
-          <span class="info-value joining-date">January 1, 2023</span>
-        </div>
-        <div class="employee-info-row">
-          <span class="info-label">Description:</span>
-          <span class="info-value desc">John is a highly skilled software engineer with expertise in backend and frontend technologies. He excels in team collaboration and problem-solving.</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <footer class="dashboard-footer">
-    <p>Alasoft Team &copy; 2026</p>
-    <button type="button" class="logout">Sign Out</button>
-  </footer>
   </main>
 
   <!-- Full update detail modal -->
@@ -105,30 +73,64 @@
     </div>
   </div>
 
-  <div class="modal" id="editProfileModal">
-    <div class="modal-content">
-      <h2>Edit Profile</h2>
-      <form class="profileForm">
-        <div class="form-group">
-          <label for="fullname">Full Name</label>
-          <input type="text" id="fullname" placeholder="Enter your full name" required>
-        </div>
-        <div class="profile-pic-upload">
-          <label for="profile-pic" class="upload-area">
-            <span class="closeImg"><i class="fa-solid fa-xmark"></i></span>
-            <img class="previewImg" alt="">
-            <span class="upload-icon"><i class="fa-solid fa-upload"></i></span>
-            <span class="upload-text">Upload Profile Picture</span>
-            <input type="file" id="profile-pic" accept="image/*" hidden>
-          </label>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn save-btn">Update profile</button>
-          <button type="button" class="btn cancel-btn">Cancel</button>
-        </div>
-      </form>
+  <section class="employee-info-section">
+  <div class="employee-info-card">
+    <div class="employee-info-header">
+      <h2>Your Personal Information</h2>
+    </div>
+    <div class="employee-info-body">
+      <div class="employee-info-row">
+        <span class="info-label">Name:</span>
+        <span class="info-value fullName">John Doe</span>
+      </div>
+      <div class="employee-info-row">
+        <span class="info-label">Email:</span>
+        <span class="info-value email">johndoe@example.com</span>
+      </div>
+      <div class="employee-info-row">
+        <span class="info-label">Joining Date:</span>
+        <span class="info-value joining-date">January 1, 2023</span>
+      </div>
+      <div class="employee-info-row">
+        <span class="info-label">Description:</span>
+        <span class="info-value desc">
+          John is a highly skilled software engineer with expertise in backend and frontend technologies. He excels in team collaboration and problem-solving.
+        </span>
+      </div>
     </div>
   </div>
+  </section>
+
+
+  <div class="modal">
+  <div class="modal-content">
+    <h2>Edit Profile</h2>
+    <form class="profileForm">
+      <div class="form-group">
+        <label for="fullname">Full Name</label>
+        <input type="text" id="fullname" placeholder="Enter your full name" required>
+      </div>
+      <div class="profile-pic-upload">
+        <label for="profile-pic" class="upload-area">
+          <span class="closeImg"><i class="fa-solid fa-xmark"></i></span>
+          <img class="previewImg" alt="">
+          <span class="upload-icon"><i class="fa-solid fa-upload"></i></span>
+          <span class="upload-text">Upload Profile Picture</span>
+          <input type="file" id="profile-pic" accept="image/*" hidden>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn save-btn">Update profile</button>
+        <button type="button" class="btn cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </div>
+  </div>
+
+  <footer>
+    <p>Alasoft Team &copy; 2026</p>
+    <button class="logout">Sign Out</button>
+  </footer>
 
     <!-- Toast messages -->
     <div class="notifications"></div>
