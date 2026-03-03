@@ -115,40 +115,58 @@
     min-width: 100%;
   }
 
-  .updates-list-container {
+  /* Daily Updates Overview – mobile stacked cards */
+  .updates-overview-body {
     max-height: 60vh;
-    min-height: 180px;
+    padding: 8px;
   }
 
-  .update-card-header {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;
+  .updates-overview-header {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 10px 16px;
+    font-size: 11px;
   }
 
-  .update-employee-name,
-  .update-employee-id {
-    font-size: 0.95rem;
+  .update-overview-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
   }
 
-  .update-date {
+  .update-overview-row .updates-col-name {
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .update-overview-row .updates-col-update {
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .update-overview-row .updates-col-comments {
+    padding-bottom: 0;
+  }
+
+  .update-row-preview {
+    -webkit-line-clamp: 3;
+  }
+
+  .update-overview-row .add-comment-btn,
+  .update-overview-row .submit-comment-btn {
     width: 100%;
-    margin-left: 0;
-    margin-top: 4px;
-    font-size: 0.85rem;
   }
 
-  .update-card-body {
+  .updates-pagination {
     padding: 12px;
+    gap: 6px;
   }
 
-  .update-card-comments {
-    padding: 10px 12px;
-  }
-
-  .update-card-comments .add-comment-btn,
-  .update-card-comments .submit-comment-btn {
-    width: 100%;
+  .pagination-btn {
+    min-width: 32px;
+    height: 32px;
+    font-size: 12px;
   }
 }
 
@@ -174,12 +192,12 @@
     font-size: 1.35rem;
   }
 
-  .update-card-header {
-    padding: 8px 10px;
+  .update-overview-row {
+    padding: 12px;
   }
 
-  .update-card-body {
-    padding: 10px;
+  .update-detail-modal-content {
+    padding: 20px 24px;
   }
 
   .update-field p,

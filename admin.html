@@ -88,11 +88,21 @@
             <button type="button" class="btn-green btn-secondary" id="clearUpdateFilters">Clear</button>
           </div>
           <div class="updates-not-submitted" id="updatesNotSubmitted"></div>
-          <div class="updates-list-container" id="updatesListContainer">
-            <div class="empty-employee" id="noUpdatesPlaceholder">
-              <span><i class="fa-solid fa-clipboard-list"></i></span>
-              <h3>No daily updates yet.</h3>
+          <div class="updates-overview-wrapper">
+            <div class="updates-overview-table">
+              <div class="updates-overview-header">
+                <div class="updates-col updates-col-name">Name</div>
+                <div class="updates-col updates-col-update">Update</div>
+                <div class="updates-col updates-col-comments">Comments</div>
+              </div>
+              <div class="updates-overview-body" id="updatesListContainer">
+                <div class="empty-employee" id="noUpdatesPlaceholder">
+                  <span><i class="fa-solid fa-clipboard-list"></i></span>
+                  <h3>No daily updates yet.</h3>
+                </div>
+              </div>
             </div>
+            <div class="updates-pagination" id="updatesPagination"></div>
           </div>
         </div>
       </div>
@@ -145,6 +155,14 @@
             <button type="submit" class="btn-green"><span><i class="fa-solid fa-user-plus"></i></span> Add
               Employee</button>
           </form>
+        </div>
+      </div>
+
+      <!-- Update detail modal (full update view) -->
+      <div id="updateDetailModal" class="modal">
+        <div class="modal-content update-detail-modal-content">
+          <span id="closeUpdateDetailModal" class="close" data-toggle>&times;</span>
+          <div id="updateDetailModalBody"></div>
         </div>
       </div>
 

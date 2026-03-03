@@ -1,29 +1,49 @@
 
+// ————— Centralized error handling —————
+const DEFAULT_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
+/**
+ * Returns a user-friendly error message from any thrown value.
+ * Handles Supabase errors, Error instances, and unknown objects.
+ */
+function getErrorMessage(err, fallback = DEFAULT_ERROR_MESSAGE) {
+  if (err == null) return fallback;
+  if (typeof err === 'string') return err || fallback;
+  const msg = err?.message ?? err?.error_description ?? err?.msg ?? err?.error;
+  if (typeof msg === 'string' && msg.trim()) return msg.trim();
+  return fallback;
+}
+
+function escapeToastText(str) {
+  if (str == null || typeof str !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 // CREATE TOAST HERE;
 const notifications = document.querySelector('.notifications');
-const createToastForNotification = function (type, icon, title, text){
-    if (!notifications) return;
-    let newToast = document.createElement('div');
-    newToast.innerHTML = `
-        <div class="toast ${type}">
-        <i class="${icon}"></i>
-        <div class="content">
-            <div class="title">${title}</div>
-            <span>${text}</span>
-            </div>
-            <i class="fa-solid fa-xmark" aria-label="Close notification" role="button"></i>
-        </div>`;
-    notifications.appendChild(newToast);
-    const closeBtn = newToast.querySelector('.fa-xmark');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => newToast.remove());
-    }
-    newToast.timeOut = setTimeout(
-        ()=>newToast.remove(), 5000
-    );
-}
+const createToastForNotification = function (type, icon, title, text) {
+  if (!notifications) return;
+  const safeTitle = escapeToastText(title ?? '');
+  const safeText = escapeToastText(text ?? '');
+  let newToast = document.createElement('div');
+  newToast.innerHTML = `
+    <div class="toast ${type}">
+      <i class="${icon}"></i>
+      <div class="content">
+        <div class="title">${safeTitle}</div>
+        <span>${safeText}</span>
+      </div>
+      <i class="fa-solid fa-xmark" aria-label="Close notification" role="button"></i>
+    </div>`;
+  notifications.appendChild(newToast);
+  const closeBtn = newToast.querySelector('.fa-xmark');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => newToast.remove());
+  }
+  newToast.timeOut = setTimeout(() => newToast.remove(), 5000);
+};
 
 // Format date string (YYYY-MM-DD) as "Fri, 27 Feb 2026"
 function formatUpdateDate(dateStr) {
@@ -62,34 +82,33 @@ const getRelativeTime = function (milliseconds) {
 
 // CREATE LOADING FUNCTIONS HIDE AND SHOW AND PERFORM LOADING SPINER...
 function showSpinner() {
-  document.getElementById('spinner').style.display = 'flex';
+  const el = document.getElementById('spinner');
+  if (el) el.style.display = 'flex';
 }
 
 function hideSpinner() {
-  document.getElementById('spinner').style.display = 'none';
+  const el = document.getElementById('spinner');
+  if (el) el.style.display = 'none';
 }
 
 
 let loadingTimeout; // Declare a variable for timeout
 
 function showLoading(text) {
-  // Create the loading animation dynamically
-  const loadingWrapper = document.createElement('div');
-  loadingWrapper.classList.add('loading-wrapper')
-  loadingWrapper.innerHTML = `<div class="loading-animation" id="loadingAnimation">
+  try {
+    const safeText = escapeToastText(text ?? 'Loading...');
+    const loadingWrapper = document.createElement('div');
+    loadingWrapper.classList.add('loading-wrapper');
+    loadingWrapper.innerHTML = `<div class="loading-animation" id="loadingAnimation">
       <video src="./assets/videos/loading-video.mp4" muted autoplay loop></video>
       <div class="loading-bar"></div>
-        <p>${text}</p>
-    </div>`
-
-
-  // Append the loading animation to the body
-  document.body.appendChild(loadingWrapper);
-
-  // Start a timeout to remove the loading element after 3 seconds
-  loadingTimeout = setTimeout(() => {
-    hideLoading();
-  }, 3000);
+      <p>${safeText}</p>
+    </div>`;
+    if (document.body) document.body.appendChild(loadingWrapper);
+    loadingTimeout = setTimeout(() => hideLoading(), 3000);
+  } catch (err) {
+    console.error('showLoading:', err);
+  }
 }
 
 function hideLoading() {
@@ -108,13 +127,14 @@ function hideLoading() {
 
 
 
-export { 
-    createToastForNotification,
-    getRelativeTime,
-    formatUpdateDate,
-    formatUpdateDateShort,
-    showSpinner,
-    hideSpinner,
-    showLoading
-
-}
+export {
+  createToastForNotification,
+  getRelativeTime,
+  formatUpdateDate,
+  formatUpdateDateShort,
+  showSpinner,
+  hideSpinner,
+  showLoading,
+  getErrorMessage,
+  DEFAULT_ERROR_MESSAGE,
+};

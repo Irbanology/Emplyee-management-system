@@ -1,5 +1,5 @@
 import { validateForm, employeeData } from "./validate.js";
-import { createToastForNotification, formatUpdateDate, getRelativeTime, hideSpinner, showLoading, showSpinner } from "./utils.js";
+import { createToastForNotification, formatUpdateDate, getErrorMessage, getRelativeTime, hideSpinner, showLoading, showSpinner } from "./utils.js";
 import { 
   createEmployeeDataInDatabase,
   getEmployeeDataFromDatabase,
@@ -24,32 +24,44 @@ const logoutBtn = document.querySelector('.logout-btn');
 
 // CHECK ADMIN AUTHHENTICATED OR NOT...
 const sessionCheckForAdmin = async () => {
-  const session = await checkUserLoginOrNot();
-  if (!session) {
+  try {
+    const session = await checkUserLoginOrNot();
+    if (!session) {
+      window.location.href = './index.html';
+      return;
+    }
+  } catch (err) {
+    console.error('sessionCheckForAdmin:', err);
     window.location.href = './index.html';
   }
 };
 
-sessionCheckForAdmin();
+sessionCheckForAdmin().catch(() => {});
 showLoading("Loading Admin Panel...");
 
 
-logoutBtn.addEventListener("click", async () => {
-  showSpinner();
-  await logout()
-  sessionCheckForAdmin();
-  hideSpinner();
-});
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    showSpinner();
+    try {
+      await logout();
+      sessionCheckForAdmin();
+    } catch (err) {
+      console.error('Logout:', err);
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Could not sign out.'));
+    } finally {
+      hideSpinner();
+    }
+  });
+}
 
 // Toggle Sidebar
-toggleSidebar.addEventListener('click', () => {
-  sidebar.classList.toggle('active');
-});
-
-// Toggle Sidebar with close button
-closeSidebar.addEventListener('click', () => {
-  sidebar.classList.remove('active');
-});
+if (toggleSidebar && sidebar) {
+  toggleSidebar.addEventListener('click', () => sidebar.classList.toggle('active'));
+}
+if (closeSidebar && sidebar) {
+  closeSidebar.addEventListener('click', () => sidebar.classList.remove('active'));
+}
 
 // Handle active role (including Daily Updates tab)
 const employeeListSection = document.getElementById('employeeListSection');
@@ -60,85 +72,94 @@ roles.forEach(role => {
   role.addEventListener('click', async (e) => {
     roles.forEach(r => r.classList.remove('active'));
     role.classList.add('active');
-    sidebar.classList.remove('active');
+    if (sidebar) sidebar.classList.remove('active');
 
     const section = role.getAttribute('data-section');
     if (section === 'daily-updates') {
-      employeeListSection.style.display = 'none';
-      employeeBtns.style.display = 'none';
-      dailyUpdatesSection.style.display = 'block';
-      loadDailyUpdatesView();
+      if (employeeListSection) employeeListSection.style.display = 'none';
+      if (employeeBtns) employeeBtns.style.display = 'none';
+      if (dailyUpdatesSection) {
+        dailyUpdatesSection.style.display = 'block';
+        loadDailyUpdatesView();
+      }
       return;
     }
 
-    employeeListSection.style.display = 'block';
-    employeeBtns.style.display = 'flex';
-    dailyUpdatesSection.style.display = 'none';
+    if (employeeListSection) employeeListSection.style.display = 'block';
+    if (employeeBtns) employeeBtns.style.display = 'flex';
+    if (dailyUpdatesSection) dailyUpdatesSection.style.display = 'none';
 
     const roleEl = e.target.closest('.role');
     const department = roleEl?.getAttribute('data-department') ?? roleEl?.textContent?.trim() ?? '';
-    const employeesdata = await getEmployeeDataFromDatabase();
-
-    if (department === '' || department === 'All Employees') {
-      showEmployeeCard(employeesdata);
-    } else {
-      const departmentEmployeeData = employeesdata.filter((el) => el.employeeData.department === department);
-      showEmployeeCard(departmentEmployeeData);
+    try {
+      const employeesdata = await getEmployeeDataFromDatabase();
+      if (department === '' || department === 'All Employees') {
+        showEmployeeCard(employeesdata);
+      } else {
+        const departmentEmployeeData = employeesdata.filter((el) => el.employeeData?.department === department);
+        showEmployeeCard(departmentEmployeeData);
+      }
+    } catch (err) {
+      console.error('Failed to load employees:', err);
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Could not load employees.'));
     }
   });
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-   const roles = document.querySelector('.role');
-   roles.click();
-})
+  const firstRole = document.querySelector('.role');
+  if (firstRole) firstRole.click();
+});
 
 
 // Open modal
-openModal.addEventListener("click", () => {
-  modal.classList.add('active');
-});
+if (openModal && modal) {
+  openModal.addEventListener("click", () => modal.classList.add('active'));
+}
 
 // Close modal
-closeModal.addEventListener("click", () => {
-  modal.classList.remove('active');
-  form.querySelector('.btn-green').innerHTML = '<span><i class="fa-solid fa-user-plus"></i></span> Add Employee';
-  document.querySelector('#email').removeAttribute('readonly');
-  document.querySelector('#password').removeAttribute('readonly');
-  form.removeAttribute('data-edit-id');
-  const employeeIdInput = document.querySelector('#employeeId');
-  if (employeeIdInput) employeeIdInput.removeAttribute('readonly');
-  form.reset();
-});
-
-// Single window click handler: close modals only when clicking overlay (not content)
-window.addEventListener("click", (e) => {
-  if (e.target === modal) {
+if (closeModal && modal && form) {
+  closeModal.addEventListener("click", () => {
     modal.classList.remove('active');
     const btn = form.querySelector('.btn-green');
     if (btn) btn.innerHTML = '<span><i class="fa-solid fa-user-plus"></i></span> Add Employee';
-    form.removeAttribute('data-edit-id');
     document.querySelector('#email')?.removeAttribute('readonly');
     document.querySelector('#password')?.removeAttribute('readonly');
-    const employeeIdInput = document.querySelector('#employeeId');
-    if (employeeIdInput) employeeIdInput.removeAttribute('readonly');
+    form.removeAttribute('data-edit-id');
+    document.querySelector('#employeeId')?.removeAttribute('readonly');
     form.reset();
-  } else if (e.target === employeeModal) {
+  });
+}
+
+// Single window click handler: close modals only when clicking overlay (not content)
+window.addEventListener("click", (e) => {
+  if (e.target === modal && modal) {
+    modal.classList.remove('active');
+    if (form) {
+      const btn = form.querySelector('.btn-green');
+      if (btn) btn.innerHTML = '<span><i class="fa-solid fa-user-plus"></i></span> Add Employee';
+      form.removeAttribute('data-edit-id');
+      form.reset();
+    }
+    document.querySelector('#email')?.removeAttribute('readonly');
+    document.querySelector('#password')?.removeAttribute('readonly');
+    document.querySelector('#employeeId')?.removeAttribute('readonly');
+  } else if (e.target === employeeModal && employeeModal) {
     employeeModal.classList.remove('active');
   }
 });
 
 
 // FORM SUBMITION OR VALIDATION STARTED HERE....
-form.addEventListener("submit", async function (event) {
+if (form) {
+  form.addEventListener("submit", async function (event) {
   event.preventDefault();
-  
-  const form = event.target;
-  const editId = form.getAttribute('data-edit-id');
-  const roles = document.querySelector('.role');
+
+  const formEl = event.target;
+  const editId = formEl.getAttribute('data-edit-id');
 
   // Call reusable validation function
-  const isValid = await validateForm(form, editId);
+  const isValid = await validateForm(formEl, editId);
   
   if (editId) {
     document.querySelector('#password').setAttribute('readonly', '');
@@ -161,18 +182,23 @@ form.addEventListener("submit", async function (event) {
       console.log("EDITING employeeData (merged):", merged);
       const editEmployeeData = await editEmployeeFromDatabase(merged, editId);
       showEmployeeCard(editEmployeeData);
-      roles.classList.add('active');
-      roles.click();
-      modal.classList.remove('active');
-      document.querySelector('#email').removeAttribute('readonly');
-      document.querySelector('#password').removeAttribute('readonly');
-      form.querySelector('.btn-green').innerHTML = '<span><i class="fa-solid fa-user-plus"></i></span> Add Employee';
-      form.removeAttribute('data-edit-id');
+      const firstRole = document.querySelector('.role');
+      if (firstRole) {
+        roles.forEach(r => r.classList.remove('active'));
+        firstRole.classList.add('active');
+        firstRole.click();
+      }
+      if (modal) modal.classList.remove('active');
+      document.querySelector('#email')?.removeAttribute('readonly');
+      document.querySelector('#password')?.removeAttribute('readonly');
+      const btn = formEl.querySelector('.btn-green');
+      if (btn) btn.innerHTML = '<span><i class="fa-solid fa-user-plus"></i></span> Add Employee';
+      formEl.removeAttribute('data-edit-id');
       createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', "Employee updated successfully!");
-      form.reset();
+      formEl.reset();
     } catch (err) {
       console.error("Employee update failed:", err);
-      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', err?.message || "Update failed. Check console.");
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Update failed. Please try again.'));
     } finally {
       hideSpinner();
     }
@@ -184,35 +210,43 @@ form.addEventListener("submit", async function (event) {
     try {
       const getEmployeeData = await createEmployeeDataInDatabase(employeeData);
       showEmployeeCard(getEmployeeData);
-      roles.classList.add('active');
-      roles.click();
-      form.reset();
-      modal.classList.remove('active');
+      const firstRole = document.querySelector('.role');
+      if (firstRole) {
+        roles.forEach(r => r.classList.remove('active'));
+        firstRole.classList.add('active');
+        firstRole.click();
+      }
+      formEl.reset();
+      if (modal) modal.classList.remove('active');
       createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', "Employee created successfully!");
     } catch (err) {
-      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', err?.message || "Failed to create employee.");
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Failed to create employee.'));
     } finally {
       hideSpinner();
     }
   }
-});
+  });
+}
 
 
 // SHOW EMPLOYEE CARD IN HTML. THAT FUNCTIONALITY STARTED HERE...
 const employeeContainer = document.querySelector('.employee-list-card-container');
 const showEmployeeCard = (employeeData) => {
-  
+  if (!employeeContainer) return;
+  const list = Array.isArray(employeeData) ? employeeData : [];
   employeeContainer.innerHTML = '';
-  if (employeeData.length === 0) {
+  if (list.length === 0) {
     
     employeeContainer.innerHTML = `<div class="empty-employee">
             <span><i class="fa-solid fa-users-slash"></i></span>
             <h3>No employee has been created so far.</h3>
           </div>`
-    employeeContainer.querySelector('.empty-employee').classList.add('active')
+    const emptyEl = employeeContainer.querySelector('.empty-employee');
+    if (emptyEl) emptyEl.classList.add('active');
+    return;
   }
-  
-  employeeData.forEach(({ id, employeeData }) => {
+  list.forEach(({ id, employeeData }) => {
+    if (!employeeData) return;
     const empId = employeeData.employeeId || '—';
     // No id on card — only class and data-employeeid so each click targets the correct card
     employeeContainer.innerHTML += `<div class="employee-card" data-employeeid="${id}">
@@ -247,20 +281,27 @@ if (employeeContainer) {
 
 // Open employee detail modal by employee row id
 const openEmployeeDetail = async (employeeId) => {
-  const detailData = await getEmployeeDataFromDatabase();
-  const detailEmployeeDataForModel = detailData?.find((employee) => String(employee.id) === String(employeeId));
-
-  if (!detailEmployeeDataForModel) {
-    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Employee not found. The list may be outdated.');
-    return;
+  if (!employeeModal) return;
+  try {
+    const detailData = await getEmployeeDataFromDatabase();
+    const detailEmployeeDataForModel = (Array.isArray(detailData) ? detailData : []).find(
+      (employee) => String(employee.id) === String(employeeId)
+    );
+    if (!detailEmployeeDataForModel) {
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Employee not found. The list may be outdated.');
+      return;
+    }
+    showDataInEmployeeDetailModel(detailEmployeeDataForModel);
+    employeeModal.classList.add('active');
+  } catch (err) {
+    console.error('openEmployeeDetail:', err);
+    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Could not load employee details.'));
   }
-
-  showDataInEmployeeDetailModel(detailEmployeeDataForModel);
-  employeeModal.classList.add('active');
 };
 
 // Show detail modal for the opened employee only; id is the table row id used for edit/delete
 const showDataInEmployeeDetailModel = ({ id, employeeData }) => {
+  if (!employeeModal) return;
   const openedEmployeeRowId = id;
 
   employeeModal.innerHTML = `<div class="modal-content employee-detail">
@@ -290,65 +331,85 @@ const showDataInEmployeeDetailModel = ({ id, employeeData }) => {
     </div>`
 
   // Close modal
-  employeeModal.querySelector('#closeEmployeeModal').addEventListener("click", () => {
-    employeeModal.classList.remove('active');
-  });
+  const closeBtn = employeeModal.querySelector('#closeEmployeeModal');
+  if (closeBtn) closeBtn.addEventListener('click', () => employeeModal.classList.remove('active'));
 
   // DELETE EMPLOYEE FROM UI AND DATABASE (uses opened employee only)
-  employeeModal.querySelector('.deleteBtn').addEventListener("click", async () => {
+  const deleteBtn = employeeModal.querySelector('.deleteBtn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
     showSpinner();
-    const roles = document.querySelector('.role');
     try {
       const error = await deleteDataFromDatabase(openedEmployeeRowId);
       if (error) {
         hideSpinner();
-        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', error?.message || "Could not delete employee.");
+        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(error, 'Could not delete employee.'));
         return;
       }
       const data = await getEmployeeDataFromDatabase();
       showEmployeeCard(data);
       employeeModal.classList.remove('active');
-      roles.classList.add('active');
-      roles.click();
+      const firstRole = document.querySelector('.role');
+      if (firstRole) {
+        roles.forEach(r => r.classList.remove('active'));
+        firstRole.classList.add('active');
+        firstRole.click();
+      }
       createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', "Employee deleted successfully.");
     } catch (err) {
-      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', err?.message || "An error occurred while deleting.");
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'An error occurred while deleting.'));
     } finally {
       hideSpinner();
     }
   });
+  }
 
   // EDIT EMPLOYEE — apply to the currently opened employee only
-  employeeModal.querySelector('.EditBtn').addEventListener("click", () => {
-    form.querySelector('.btn-green').innerHTML = '<span><i class="fa-solid fa-pen-to-square"></i></span> Update Employee';
+  const editBtn = employeeModal.querySelector('.EditBtn');
+  if (editBtn && form) {
+    editBtn.addEventListener('click', () => {
+    const submitBtn = form.querySelector('.btn-green');
+    if (submitBtn) submitBtn.innerHTML = '<span><i class="fa-solid fa-pen-to-square"></i></span> Update Employee';
 
     employeeModal.classList.remove('active');
-    modal.classList.add("active");
+    if (modal) modal.classList.add('active');
 
-    document.querySelector('#fullName').value = employeeData.fullName;
+    const fullNameEl = document.querySelector('#fullName');
+    if (fullNameEl) fullNameEl.value = employeeData?.fullName ?? '';
     const employeeIdInput = document.querySelector('#employeeId');
     if (employeeIdInput) {
-      employeeIdInput.value = employeeData.employeeId || '';
+      employeeIdInput.value = employeeData?.employeeId ?? '';
       employeeIdInput.setAttribute('readonly', '');
     }
-    document.querySelector('#email').value = employeeData.email;
-    document.querySelector('#email').setAttribute('readonly', '');
-    document.querySelector('#password').value = employeeData.password;
-    document.querySelector('#password').setAttribute('readonly', '');
-    document.querySelector('#joiningDate').value = employeeData.joiningDate;
-    document.querySelector('#department').value = employeeData.department;
-    document.querySelector('#description').value = employeeData.description;
+    const emailEl = document.querySelector('#email');
+    if (emailEl) { emailEl.value = employeeData?.email ?? ''; emailEl.setAttribute('readonly', ''); }
+    const passwordEl = document.querySelector('#password');
+    if (passwordEl) { passwordEl.value = employeeData?.password ?? ''; passwordEl.setAttribute('readonly', ''); }
+    const joiningEl = document.querySelector('#joiningDate');
+    if (joiningEl) joiningEl.value = employeeData?.joiningDate ?? '';
+    const deptEl = document.querySelector('#department');
+    if (deptEl) deptEl.value = employeeData?.department ?? '';
+    const descEl = document.querySelector('#description');
+    if (descEl) descEl.value = employeeData?.description ?? '';
 
     form.setAttribute('data-edit-id', openedEmployeeRowId);
   });
+  }
 };
 
 // ————— Daily Updates (admin) —————
+const UPDATES_PAGE_SIZE = 10;
 let allUpdatesAggregate = [];
+let currentFilteredUpdates = [];
+let currentUpdatesPage = 1;
 
 function aggregateAllUpdates(employeesData) {
   const list = [];
-  employeesData.forEach(({ id, employeeData: emp }) => {
+  const data = Array.isArray(employeesData) ? employeesData : [];
+  data.forEach((item) => {
+    const id = item.id;
+    const emp = item.employeeData;
+    if (!emp) return;
     const updates = Array.isArray(emp.dailyUpdates) ? emp.dailyUpdates : [];
     updates.forEach((u) => {
       const normalizedUpdate = {
@@ -386,64 +447,152 @@ function buildUpdateField(label, value, fieldKey) {
   `;
 }
 
+/** Hash string to a hue (0–360) for consistent name color */
+function getNameColor(name) {
+  if (!name || typeof name !== 'string') return '42DEDF';
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = ((h << 5) - h) + name.charCodeAt(i);
+  h = Math.abs(h) % 360;
+  return `hsl(${h}, 65%, 60%)`;
+}
+
+/** Raw combined preview for title attribute (updateText or legacy workDone/workPlanned) */
+function getUpdatePreviewRaw(u) {
+  if (u.updateText != null && String(u.updateText).trim() !== '') {
+    return String(u.updateText).trim();
+  }
+  const done = (u.workDone || '').trim() || '—';
+  const next = (u.workPlanned || '').trim() || '—';
+  return `Completed: ${done} • Next: ${next}`;
+}
+
+/** Escaped combined preview for HTML (max 2 lines via CSS) */
+function getUpdatePreviewText(u) {
+  return escapeHtml(getUpdatePreviewRaw(u));
+}
+
 function renderUpdatesList(updates) {
   const container = document.getElementById('updatesListContainer');
+  const paginationEl = document.getElementById('updatesPagination');
+  if (!container) return;
   container.innerHTML = '';
+  if (paginationEl) paginationEl.innerHTML = '';
+
+  currentFilteredUpdates = updates;
+  const totalPages = Math.max(1, Math.ceil(updates.length / UPDATES_PAGE_SIZE));
+  const start = (currentUpdatesPage - 1) * UPDATES_PAGE_SIZE;
+  const pageUpdates = updates.slice(start, start + UPDATES_PAGE_SIZE);
+
   if (!updates.length) {
     container.innerHTML = '<div class="empty-employee" id="noUpdatesPlaceholder"><span><i class="fa-solid fa-clipboard-list"></i></span><h3>No daily updates match the filters.</h3></div>';
     return;
   }
-  updates.forEach((u) => {
-    const card = document.createElement('div');
-    card.className = 'update-card';
-    card.setAttribute('data-db-id', u.dbId);
-    card.setAttribute('data-update-id', u.updateId);
 
-    const isReviewed = u.status === 'reviewed';
-    const statusLabel = isReviewed ? 'Reviewed' : 'Submitted';
-    const statusStyles = isReviewed
-      ? 'background-color:#d1fae5;color:#047857;'
-      : 'background-color:#fee2e2;color:#b91c1c;';
-
+  pageUpdates.forEach((u) => {
     const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
+    const latestComment = comments.length ? (comments[comments.length - 1].commentText || '') : '';
+    const nameColor = getNameColor(u.employeeName);
 
-    card.innerHTML = `
-      <div class="update-card-header">
-        <span class="update-employee-name">${escapeHtml(u.employeeName)}</span>
-        <span class="update-employee-id">${escapeHtml(u.employeeId)}</span>
-        <span class="update-date">${escapeHtml(formatUpdateDate(u.date))}</span>
-        <span class="update-status" style="margin-left:auto;padding:2px 10px;border-radius:999px;font-size:12px;${statusStyles}">${statusLabel}</span>
+    const row = document.createElement('div');
+    row.className = 'update-overview-row';
+    row.setAttribute('data-db-id', u.dbId);
+    row.setAttribute('data-update-id', u.updateId || '');
+
+    row.innerHTML = `
+      <div class="updates-col updates-col-name">
+        <span class="update-row-name" style="color:${nameColor}">${escapeHtml(u.employeeName)}</span>
+        <span class="update-row-id-badge">${escapeHtml(u.employeeId)}</span>
       </div>
-      <div class="update-card-body">
-        ${buildUpdateField('Work Done', u.workDone, 'workDone')}
-        ${buildUpdateField('Work Planned', u.workPlanned, 'workPlanned')}
-        ${buildUpdateField('Blockers', u.blockers, 'blockers')}
+      <div class="updates-col updates-col-update">
+        <p class="update-row-preview" title="${escapeHtml(getUpdatePreviewRaw(u))}">${getUpdatePreviewText(u)}</p>
+        <button type="button" class="btn-view-full" data-action="view-full"><span><i class="fa-solid fa-external-link-alt"></i></span> View Full</button>
       </div>
-      <div class="update-card-comments">
-        <h4>Admin Comments</h4>
-        <div class="comments-list">
-          ${
-            comments.length
-              ? comments
-                  .map(
-                    (c) => `
-            <div class="comment-item" data-comment-id="${c.commentId}">
-              <span class="comment-text">${escapeHtml(c.commentText || '')}</span>
-            </div>`
-                  )
-                  .join('')
-              : '<p class="no-comments">No comments yet.</p>'
-          }
-        </div>
-        <button type="button" class="btn-green add-comment-btn"><span><i class="fa-solid fa-comment-dots"></i></span> Add Comment</button>
-        <div class="add-comment-form" style="display: none; margin-top: 8px;">
+      <div class="updates-col updates-col-comments">
+        <p class="update-row-comment-preview">${latestComment ? escapeHtml(latestComment) : 'No comments yet'}</p>
+        <button type="button" class="btn-green add-comment-btn" data-action="add-comment"><span><i class="fa-solid fa-comment-dots"></i></span> Add Comment</button>
+        <div class="add-comment-form" style="display: none;">
           <textarea class="admin-comment-input" rows="2" placeholder="Add your comment..."></textarea>
-          <button type="button" class="btn-green submit-comment-btn" style="margin-top: 4px;"><span><i class="fa-solid fa-paper-plane"></i></span> Submit Comment</button>
+          <button type="button" class="btn-green submit-comment-btn"><span><i class="fa-solid fa-paper-plane"></i></span> Submit Comment</button>
         </div>
       </div>
     `;
-    container.appendChild(card);
+    container.appendChild(row);
   });
+
+  // Pagination
+  if (!paginationEl) return;
+  const frag = document.createDocumentFragment();
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'pagination-btn';
+  prevBtn.textContent = 'Prev';
+  prevBtn.disabled = currentUpdatesPage === 1;
+  prevBtn.addEventListener('click', () => {
+    if (currentUpdatesPage > 1) {
+      currentUpdatesPage--;
+      renderUpdatesList(currentFilteredUpdates);
+    }
+  });
+  frag.appendChild(prevBtn);
+
+  const maxVisible = 5;
+  let from = Math.max(1, currentUpdatesPage - Math.floor(maxVisible / 2));
+  let to = Math.min(totalPages, from + maxVisible - 1);
+  if (to - from + 1 < maxVisible) from = Math.max(1, to - maxVisible + 1);
+
+  if (from > 1) {
+    const one = document.createElement('button');
+    one.type = 'button';
+    one.className = 'pagination-btn pagination-num';
+    one.textContent = '1';
+    one.addEventListener('click', () => { currentUpdatesPage = 1; renderUpdatesList(currentFilteredUpdates); });
+    frag.appendChild(one);
+    if (from > 2) {
+      const dots = document.createElement('span');
+      dots.className = 'pagination-dots';
+      dots.textContent = '...';
+      frag.appendChild(dots);
+    }
+  }
+
+  for (let i = from; i <= to; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pagination-btn pagination-num' + (i === currentUpdatesPage ? ' active' : '');
+    btn.textContent = String(i);
+    const page = i;
+    btn.addEventListener('click', () => { currentUpdatesPage = page; renderUpdatesList(currentFilteredUpdates); });
+    frag.appendChild(btn);
+  }
+
+  if (to < totalPages) {
+    if (to < totalPages - 1) {
+      const dots = document.createElement('span');
+      dots.className = 'pagination-dots';
+      dots.textContent = '...';
+      frag.appendChild(dots);
+    }
+    const last = document.createElement('button');
+    last.type = 'button';
+    last.className = 'pagination-btn pagination-num';
+    last.textContent = String(totalPages);
+    last.addEventListener('click', () => { currentUpdatesPage = totalPages; renderUpdatesList(currentFilteredUpdates); });
+    frag.appendChild(last);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'pagination-btn';
+  nextBtn.textContent = 'Next';
+  nextBtn.disabled = currentUpdatesPage === totalPages;
+  nextBtn.addEventListener('click', () => {
+    if (currentUpdatesPage < totalPages) {
+      currentUpdatesPage++;
+      renderUpdatesList(currentFilteredUpdates);
+    }
+  });
+  frag.appendChild(nextBtn);
+  if (paginationEl) paginationEl.appendChild(frag);
 }
 
 function escapeHtml(text) {
@@ -454,15 +603,17 @@ function escapeHtml(text) {
 }
 
 function renderNotSubmittedToday(employeesData) {
+  const data = Array.isArray(employeesData) ? employeesData : [];
   const today = new Date().toISOString().slice(0, 10);
   const submitted = new Set();
-  employeesData.forEach(({ employeeData: emp }) => {
+  data.forEach(({ employeeData: emp }) => {
     const updates = Array.isArray(emp.dailyUpdates) ? emp.dailyUpdates : [];
     const hasToday = updates.some((u) => u.date === today);
     if (hasToday) submitted.add(emp.email);
   });
-  const notSubmitted = employeesData.filter((e) => !submitted.has(e.employeeData.email));
+  const notSubmitted = data.filter((e) => !submitted.has(e.employeeData?.email));
   const el = document.getElementById('updatesNotSubmitted');
+  if (!el) return;
   if (notSubmitted.length === 0) {
     el.innerHTML = '<p class="updates-status submitted-all">All employees have submitted for today.</p>';
     return;
@@ -473,54 +624,137 @@ function renderNotSubmittedToday(employeesData) {
 
 async function loadDailyUpdatesView() {
   showSpinner();
-  const data = await getEmployeeDataFromDatabase();
-  allUpdatesAggregate = aggregateAllUpdates(data);
-  renderUpdatesList(allUpdatesAggregate);
+  try {
+    const data = await getEmployeeDataFromDatabase();
+    allUpdatesAggregate = aggregateAllUpdates(data);
+    currentUpdatesPage = 1;
+    renderUpdatesList(allUpdatesAggregate);
 
-  const filterEmployee = document.getElementById('filterUpdateEmployee');
-  filterEmployee.innerHTML = '<option value="">All Employees</option>';
-  data.forEach(({ employeeData: emp }) => {
-    filterEmployee.innerHTML += `<option value="${emp.email}">${emp.fullName} (${emp.employeeId || emp.email})</option>`;
-  });
+    const filterEmployee = document.getElementById('filterUpdateEmployee');
+    if (filterEmployee) {
+      filterEmployee.innerHTML = '<option value="">All Employees</option>';
+    data.forEach(({ employeeData: emp }) => {
+      if (filterEmployee) filterEmployee.innerHTML += `<option value="${emp.email}">${emp.fullName} (${emp.employeeId || emp.email})</option>`;
+    });
+    }
 
-  renderNotSubmittedToday(data);
-  hideSpinner();
+    renderNotSubmittedToday(data);
+  } catch (err) {
+    console.error('Failed to load daily updates:', err);
+    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Could not load daily updates. Check your connection.'));
+    const container = document.getElementById('updatesListContainer');
+    if (container) {
+      container.innerHTML = '<div class="empty-employee" id="noUpdatesPlaceholder"><span><i class="fa-solid fa-clipboard-list"></i></span><h3>Could not load updates. Try again later.</h3></div>';
+    }
+  } finally {
+    hideSpinner();
+  }
 }
 
-document.getElementById('applyUpdateFilters').addEventListener('click', () => {
-  const dateFilter = document.getElementById('filterUpdateDate').value;
-  const employeeFilter = document.getElementById('filterUpdateEmployee').value;
+document.getElementById('applyUpdateFilters')?.addEventListener('click', () => {
+  const dateFilter = document.getElementById('filterUpdateDate')?.value ?? '';
+  const employeeFilter = document.getElementById('filterUpdateEmployee')?.value ?? '';
   let filtered = allUpdatesAggregate.filter((u) => {
     if (dateFilter && u.date !== dateFilter) return false;
     if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
     return true;
   });
+  currentUpdatesPage = 1;
   renderUpdatesList(filtered);
 });
 
-document.getElementById('clearUpdateFilters').addEventListener('click', async () => {
-  document.getElementById('filterUpdateDate').value = '';
-  document.getElementById('filterUpdateEmployee').value = '';
-  const data = await getEmployeeDataFromDatabase();
-  allUpdatesAggregate = aggregateAllUpdates(data);
-  renderUpdatesList(allUpdatesAggregate);
-  renderNotSubmittedToday(data);
+document.getElementById('clearUpdateFilters')?.addEventListener('click', async () => {
+  const dateInput = document.getElementById('filterUpdateDate');
+  const employeeSelect = document.getElementById('filterUpdateEmployee');
+  if (dateInput) dateInput.value = '';
+  if (employeeSelect) employeeSelect.value = '';
+  try {
+    const data = await getEmployeeDataFromDatabase();
+    allUpdatesAggregate = aggregateAllUpdates(data);
+    currentUpdatesPage = 1;
+    renderUpdatesList(allUpdatesAggregate);
+    renderNotSubmittedToday(data);
+  } catch (err) {
+    console.error('Clear filters / reload:', err);
+    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Could not reload updates.'));
+  }
 });
 
-// Event delegation for admin comments
+// ————— Update detail modal (full update view) —————
+const updateDetailModal = document.getElementById('updateDetailModal');
+const updateDetailModalBody = document.getElementById('updateDetailModalBody');
+
+function openUpdateDetailModal(dbId, updateId) {
+  if (!updateDetailModal || !updateDetailModalBody) return;
+  const u = allUpdatesAggregate.find((x) => String(x.dbId) === String(dbId) && String(x.updateId) === String(updateId));
+  if (!u) return;
+  const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
+  const isReviewed = u.status === 'reviewed';
+  const statusLabel = isReviewed ? 'Reviewed' : 'Submitted';
+
+  const hasUpdateText = u.updateText != null && String(u.updateText).trim() !== '';
+  const fieldsHtml = hasUpdateText
+    ? buildUpdateField("Today's Update", u.updateText, 'updateText')
+    : `${buildUpdateField('Work Done', u.workDone, 'workDone')}
+       ${buildUpdateField('Work Planned', u.workPlanned, 'workPlanned')}
+       ${buildUpdateField('Blockers', u.blockers, 'blockers')}`;
+
+  if (!updateDetailModalBody) return;
+  updateDetailModalBody.innerHTML = `
+    <h2 class="update-detail-title">Update details</h2>
+    <div class="update-detail-meta">
+      <span class="update-employee-name">${escapeHtml(u.employeeName)}</span>
+      <span class="update-employee-id">${escapeHtml(u.employeeId)}</span>
+      <span class="update-date">${escapeHtml(formatUpdateDate(u.date))}</span>
+      <span class="update-status-badge ${isReviewed ? 'reviewed' : 'submitted'}">${statusLabel}</span>
+    </div>
+    <div class="update-detail-fields">
+      ${fieldsHtml}
+    </div>
+    <div class="update-detail-comments">
+      <h4>Admin Comments</h4>
+      <div class="comments-list">
+        ${comments.length
+          ? comments.map((c) => `<div class="comment-item"><span class="comment-text">${escapeHtml(c.commentText || '')}</span></div>`).join('')
+          : '<p class="no-comments">No comments yet.</p>'}
+      </div>
+    </div>
+  `;
+  updateDetailModal.classList.add('active');
+}
+
+function closeUpdateDetailModal() {
+  if (updateDetailModal) updateDetailModal.classList.remove('active');
+}
+
+document.getElementById('closeUpdateDetailModal')?.addEventListener('click', closeUpdateDetailModal);
+window.addEventListener('click', (e) => {
+  if (e.target === updateDetailModal) closeUpdateDetailModal();
+});
+
+// Event delegation: row click, View Full, Add Comment, Submit Comment
 const updatesListContainerEl = document.getElementById('updatesListContainer');
 
 if (updatesListContainerEl) {
   updatesListContainerEl.addEventListener('click', async (e) => {
     const target = e.target;
+    const row = target.closest('.update-overview-row');
+    if (!row) return;
 
-    const card = target.closest('.update-card');
-    if (!card) return;
+    const dbId = row.getAttribute('data-db-id');
+    const updateId = row.getAttribute('data-update-id');
 
-    // Toggle "Add Comment" form visibility
-    const addCommentBtn = target.closest('.add-comment-btn');
-    if (addCommentBtn) {
-      const form = card.querySelector('.add-comment-form');
+    // View Full button → open detail modal
+    if (target.closest('[data-action="view-full"]')) {
+      e.stopPropagation();
+      openUpdateDetailModal(dbId, updateId);
+      return;
+    }
+
+    // Add Comment → toggle inline form
+    if (target.closest('[data-action="add-comment"]')) {
+      e.stopPropagation();
+      const form = row.querySelector('.add-comment-form');
       if (!form) return;
       const isHidden = form.style.display === 'none' || !form.style.display;
       form.style.display = isHidden ? 'block' : 'none';
@@ -531,10 +765,10 @@ if (updatesListContainerEl) {
       return;
     }
 
-    // Submit admin comment
-    const submitCommentBtn = target.closest('.submit-comment-btn');
-    if (submitCommentBtn) {
-      const form = card.querySelector('.add-comment-form');
+    // Submit Comment
+    if (target.closest('.submit-comment-btn')) {
+      e.stopPropagation();
+      const form = row.querySelector('.add-comment-form');
       if (!form) return;
       const textarea = form.querySelector('.admin-comment-input');
       if (!textarea) return;
@@ -543,9 +777,6 @@ if (updatesListContainerEl) {
         createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Comment cannot be empty.');
         return;
       }
-
-      const dbId = card.getAttribute('data-db-id');
-      const updateId = card.getAttribute('data-update-id');
       if (!dbId || !updateId) {
         createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Could not identify this update record.');
         return;
@@ -554,7 +785,7 @@ if (updatesListContainerEl) {
       showSpinner();
       try {
         const employees = await getEmployeeDataFromDatabase();
-        const employeeRecord = employees.find((e) => String(e.id) === String(dbId));
+        const employeeRecord = employees.find((emp) => String(emp.id) === String(dbId));
         if (!employeeRecord || !employeeRecord.employeeData) {
           createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Employee record not found.');
           return;
@@ -583,16 +814,15 @@ if (updatesListContainerEl) {
 
         const updatedAllData = await editEmployeeFromDatabase(employeeRecord.employeeData, employeeRecord.id);
         allUpdatesAggregate = aggregateAllUpdates(updatedAllData);
-
-        const dateFilter = document.getElementById('filterUpdateDate').value;
-        const employeeFilter = document.getElementById('filterUpdateEmployee').value;
-        const filtered = allUpdatesAggregate.filter((u) => {
+        currentFilteredUpdates = allUpdatesAggregate.filter((u) => {
+          const dateFilter = document.getElementById('filterUpdateDate').value;
+          const employeeFilter = document.getElementById('filterUpdateEmployee').value;
           if (dateFilter && u.date !== dateFilter) return false;
           if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
           return true;
         });
 
-        renderUpdatesList(filtered);
+        renderUpdatesList(currentFilteredUpdates);
         renderNotSubmittedToday(updatedAllData);
 
         textarea.value = '';
@@ -600,10 +830,16 @@ if (updatesListContainerEl) {
 
         createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', 'Comment added successfully.');
       } catch (err) {
-        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', err?.message || 'Failed to add comment.');
+        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Failed to add comment.'));
       } finally {
         hideSpinner();
       }
+      return;
+    }
+
+    // Row click (anywhere else) → open detail modal
+    if (target.closest('.update-overview-row') && !target.closest('.add-comment-form') && !target.closest('button')) {
+      openUpdateDetailModal(dbId, updateId);
     }
   });
 }

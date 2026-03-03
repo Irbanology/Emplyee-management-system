@@ -1,6 +1,6 @@
 // IMPORT ALL MODULES...
 import { getCurrentUser, getEmployeeDataFromDatabase, editEmployeeFromDatabase, updateProfileData, supabaseUrl, logout, checkUserLoginOrNot } from "./db.js";
-import { createToastForNotification, formatUpdateDate, formatUpdateDateShort, hideSpinner, showSpinner, showLoading } from "./utils.js";
+import { createToastForNotification, formatUpdateDate, formatUpdateDateShort, getErrorMessage, hideSpinner, showSpinner, showLoading } from "./utils.js";
 import { validateDailyUpdateForm } from "./validate.js";
 
 
@@ -18,41 +18,53 @@ const dailyUpdateStatus = document.getElementById('dailyUpdateStatus');
 const submitDailyUpdateBtn = document.getElementById('submitDailyUpdateBtn');
 
 
-// CHECK ADMIN AUTHHENTICATED OR NOT...
+// CHECK EMPLOYEE AUTH — redirect if not signed in
 const sessionCheckForEmployee = async () => {
-  const session = await checkUserLoginOrNot();
-  if (!session) {
+  try {
+    const session = await checkUserLoginOrNot();
+    if (!session) {
+      window.location.href = './index.html';
+      return;
+    }
+  } catch (err) {
+    console.error('sessionCheckForEmployee:', err);
     window.location.href = './index.html';
   }
 };
 
-sessionCheckForEmployee();
-showLoading("Loading Profile...")
+sessionCheckForEmployee().catch(() => {});
+showLoading("Loading Profile...");
 
 
-logoutBtn.addEventListener("click", async () => {
-  showSpinner();
-  await logout()
-  sessionCheckForEmployee();
-  hideSpinner();
-});
-
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    showSpinner();
+    try {
+      await logout();
+      sessionCheckForEmployee();
+    } catch (err) {
+      console.error('Logout:', err);
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Could not sign out.'));
+    } finally {
+      hideSpinner();
+    }
+  });
+}
 
 // ADD LISTNER TO OPEN EDIT PROFILE MODEL...
-editProfileBtn.addEventListener("click", () => {
-    model.classList.add("active");
-});
-
+if (editProfileBtn && model) {
+  editProfileBtn.addEventListener("click", () => model.classList.add("active"));
+}
 
 // remove LISTNER FOR CLOSE EDIT PROFILE MODEL...
-cancelBtn.addEventListener("click", () => {
+if (cancelBtn && model) {
+  cancelBtn.addEventListener("click", () => {
     model.classList.remove("active");
-    previewFile.value = '';
-    previewImg.src = '';
-    previewImg.style.display = 'none';
-    closeImg.style.display = 'none';
-    
-});
+    if (previewFile) previewFile.value = '';
+    if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
+    if (closeImg) closeImg.style.display = 'none';
+  });
+}
 
 
 // Ensure employeeData has dailyUpdates array and normalized items (for existing records)
@@ -74,38 +86,69 @@ function ensureDailyUpdates(empRecord) {
 // SHOW USER DATA OVER THE EMPLOYEE PAGE...
 let currentEmployeeDataRef = null;
 const showUserData = async () => {
-  const User = await getCurrentUser();
-  const allEmployeeData = await getEmployeeDataFromDatabase();
-  let currentEmployeeData = allEmployeeData.filter(({ employeeData }) => employeeData.email === User.email);
-  if (currentEmployeeData.length) {
-    currentEmployeeData[0] = ensureDailyUpdates(currentEmployeeData[0]);
-  }
-  currentEmployeeDataRef = currentEmployeeData;
+  try {
+    const user = await getCurrentUser();
+    if (!user?.email) {
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Please sign in to view your profile.');
+      return;
+    }
+    const allEmployeeData = await getEmployeeDataFromDatabase();
+    let currentEmployeeData = (Array.isArray(allEmployeeData) ? allEmployeeData : []).filter(
+      ({ employeeData }) => employeeData?.email === user.email
+    );
+    if (currentEmployeeData.length) {
+      currentEmployeeData[0] = ensureDailyUpdates(currentEmployeeData[0]);
+    }
+    currentEmployeeDataRef = currentEmployeeData;
 
-  showCurrentDataInPage(currentEmployeeData);
-  updateDailyUpdateUI(currentEmployeeData);
-  renderMyUpdates(currentEmployeeData);
+    showCurrentDataInPage(currentEmployeeData);
+    updateDailyUpdateUI(currentEmployeeData);
+    renderMyUpdates(currentEmployeeData);
+  } catch (err) {
+    console.error('showUserData:', err);
+    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Failed to load profile.'));
+  }
 };
 
 showUserData();
 
 // FUNCTION TO SHOW CURRENT DATA OVER THE PAGE...
 const showCurrentDataInPage = (employeeData) => {
-    const data = employeeData[0]?.employeeData
-
-    document.querySelector('.profile-photo img').src = `${!data.profilePicture ? './assets/images/human-img.png' : `${supabaseUrl}/storage/v1/object/public/${data.profilePicture}` }`;
-
-    document.querySelector('.employee-name').textContent = data?.fullName;
-    document.querySelector('.IT').textContent = data?.department;
-
-    document.querySelector('#fullname').value = data?.fullName
-    document.querySelector('#fullname').setAttribute('data-employeeid', employeeData[0]?.id);
-
-    document.querySelector(".fullName").textContent = data?.fullName;
-    document.querySelector(".email").innerHTML = data?.email;
-    document.querySelector(".joining-date").innerHTML = data?.joiningDate;
-    document.querySelector(".desc").innerHTML = data?.description;
-}
+  if (!Array.isArray(employeeData) || !employeeData.length) {
+    const emptyVal = '—';
+    const img = document.querySelector('.profile-photo img');
+    if (img) img.src = './assets/images/human-img.png';
+    const nameEl = document.querySelector('.employee-name');
+    if (nameEl) nameEl.textContent = emptyVal;
+    const deptEl = document.querySelector('.IT');
+    if (deptEl) deptEl.textContent = emptyVal;
+    const fullNameInput = document.querySelector('#fullname');
+    if (fullNameInput) { fullNameInput.value = ''; fullNameInput.removeAttribute('data-employeeid'); }
+    const sel = (q) => document.querySelector(q);
+    if (sel('.fullName')) sel('.fullName').textContent = emptyVal;
+    if (sel('.email')) sel('.email').textContent = emptyVal;
+    if (sel('.joining-date')) sel('.joining-date').textContent = emptyVal;
+    if (sel('.desc')) sel('.desc').textContent = emptyVal;
+    return;
+  }
+  const data = employeeData[0]?.employeeData;
+  const img = document.querySelector('.profile-photo img');
+  if (img) img.src = !data?.profilePicture ? './assets/images/human-img.png' : `${supabaseUrl}/storage/v1/object/public/${data.profilePicture}`;
+  const nameEl = document.querySelector('.employee-name');
+  if (nameEl) nameEl.textContent = data?.fullName ?? '—';
+  const deptEl = document.querySelector('.IT');
+  if (deptEl) deptEl.textContent = data?.department ?? '—';
+  const fullNameInput = document.querySelector('#fullname');
+  if (fullNameInput) {
+    fullNameInput.value = data?.fullName ?? '';
+    fullNameInput.setAttribute('data-employeeid', employeeData[0]?.id ?? '');
+  }
+  const sel = (q) => document.querySelector(q);
+  if (sel('.fullName')) sel('.fullName').textContent = data?.fullName ?? '—';
+  if (sel('.email')) sel('.email').textContent = data?.email ?? '—';
+  if (sel('.joining-date')) sel('.joining-date').textContent = data?.joiningDate ?? '—';
+  if (sel('.desc')) sel('.desc').textContent = data?.description ?? '—';
+};
 
 function getTodayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -167,11 +210,9 @@ function renderMyUpdates(employeeData) {
     const isReviewed = u.status === 'reviewed';
     const statusLabel = isReviewed ? 'Reviewed' : 'Submitted';
     const statusClass = isReviewed ? 'reviewed' : 'submitted';
-    const donePreview = trimPreview(u.workDone, 100);
-    const plannedPreview = trimPreview(u.workPlanned, 100);
-    const blockersPreview = trimPreview(u.blockers, 80);
-    const previewLine1 = `✔ ${escapeHtmlEmployee(donePreview)}`;
-    const previewLine2 = `📌 ${escapeHtmlEmployee(plannedPreview)} • ⚠ ${escapeHtmlEmployee(blockersPreview)}`;
+    const previewText = u.updateText != null
+      ? trimPreview(u.updateText, 120)
+      : `${trimPreview(u.workDone, 60)} • ${trimPreview(u.workPlanned, 60)}`;
 
     return `
       <div class="update-card" data-update-id="${escapeHtmlEmployee(u.updateId)}" role="button" tabindex="0">
@@ -179,7 +220,7 @@ function renderMyUpdates(employeeData) {
           <span class="date">${escapeHtmlEmployee(formatUpdateDateShort(u.date))}</span>
           <span class="status ${statusClass}">${escapeHtmlEmployee(statusLabel)}</span>
         </div>
-        <p class="preview">${previewLine1}<br>${previewLine2}</p>
+        <p class="preview">${escapeHtmlEmployee(previewText)}</p>
       </div>
     `;
   }).join('');
@@ -205,7 +246,19 @@ function openUpdateDetailModal(updateId) {
     ? comments.map((c) => `<div class="update-detail-comment"><span class="update-detail-comment-text">${escapeHtmlEmployee(c.commentText || '')}</span></div>`).join('')
     : '<p class="update-detail-no-comments">No admin comments yet.</p>';
 
-  bodyEl.innerHTML = `
+  const hasUpdateText = u.updateText != null && String(u.updateText).trim() !== '';
+  const contentHtml = hasUpdateText
+    ? `
+    <div class="update-detail-section">
+      <p class="update-detail-label">Today's Update</p>
+      <div class="update-detail-text">${escapeHtmlEmployee(u.updateText || '—')}</div>
+    </div>
+    <div class="update-detail-section update-detail-admin">
+      <p class="update-detail-label">Admin feedback</p>
+      <div class="update-detail-comments-list">${commentsHtml}</div>
+    </div>
+  `
+    : `
     <div class="update-detail-section">
       <p class="update-detail-label">Work Done</p>
       <div class="update-detail-text">${escapeHtmlEmployee(u.workDone || '—')}</div>
@@ -223,6 +276,7 @@ function openUpdateDetailModal(updateId) {
       <div class="update-detail-comments-list">${commentsHtml}</div>
     </div>
   `;
+  bodyEl.innerHTML = contentHtml;
 
   modal.classList.add('active');
   modal.setAttribute('aria-hidden', 'false');
@@ -236,116 +290,122 @@ function closeUpdateDetailModal() {
   }
 }
 
-// Delegated click for update cards + modal close
+// Delegated click and keyboard for update cards
 const myUpdatesListEl = document.getElementById('myUpdatesList');
 if (myUpdatesListEl) {
   myUpdatesListEl.addEventListener('click', (e) => {
     const card = e.target.closest('.update-card');
-    if (card) {
-      const updateId = card.getAttribute('data-update-id');
-      if (updateId) openUpdateDetailModal(updateId);
-      return;
-    }
+    if (!card) return;
+    const updateId = card.getAttribute('data-update-id');
+    if (updateId) openUpdateDetailModal(updateId);
+  });
+  myUpdatesListEl.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.update-card');
+    if (!card) return;
+    e.preventDefault();
+    const updateId = card.getAttribute('data-update-id');
+    if (updateId) openUpdateDetailModal(updateId);
   });
 }
 
 document.getElementById('updateDetailClose')?.addEventListener('click', closeUpdateDetailModal);
 document.querySelector('.update-detail-backdrop')?.addEventListener('click', closeUpdateDetailModal);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeUpdateDetailModal();
+  if (e.key !== 'Escape') return;
+  const modal = document.getElementById('updateDetailModal');
+  if (modal?.classList.contains('active')) closeUpdateDetailModal();
 });
 
 // PREVIEW IMG CODE FOR SHOW EMPLOYEE PROFILE IMG PREVIEW...
-previewFile.addEventListener("change", (event) => {
-  const files = event.target.files[0]
-  const localUrl = URL.createObjectURL(files)
-  previewImg.src = localUrl;
-  previewImg.style.display = 'block';
-  closeImg.style.display = 'block';
-  
-});
+if (previewFile) {
+  previewFile.addEventListener("change", (event) => {
+    const file = event.target?.files?.[0];
+    if (!file) return;
+    const localUrl = URL.createObjectURL(file);
+    if (previewImg) {
+      previewImg.src = localUrl;
+      previewImg.style.display = 'block';
+    }
+    if (closeImg) closeImg.style.display = 'block';
+  });
+}
 
 // DELETE THE IMAGE AND FILE IN PREVIEW WITH THE HELP OF CLOSE BTN...
-closeImg.addEventListener('click', (event) => {
-  event.stopImmediatePropagation(); 
-  event.preventDefault();
-  previewFile.value = '';
-  previewImg.src = '';
-  previewImg.style.display = 'none';
-  closeImg.style.display = 'none';
-});
+if (closeImg) {
+  closeImg.addEventListener('click', (event) => {
+    event.stopImmediatePropagation();
+    event.preventDefault();
+    if (previewFile) previewFile.value = '';
+    if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
+    closeImg.style.display = 'none';
+  });
+}
 
 
 // ADD LISTENER TO SUBMIT PROFILE FORM....
-profileForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const form = event.target;
-  let fullName = null;
-  let profilePictureName = null;
-  let employeId = null;
+if (profileForm) {
+  profileForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.target;
+    let fullName = null;
+    let profilePictureName = null;
+    let employeId = null;
 
-  for (const element of form.elements) {
-    if (element.type == 'submit' || element.type === 'button') {
-      continue
-    }
-
-    if (element.type === 'text') {
-      if(!element.value.trim()) {
-        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', "Full name is required.");
-      }else {
+    for (const element of form.elements) {
+      if (element.type === 'submit' || element.type === 'button') continue;
+      if (element.type === 'text') {
+        if (!element.value.trim()) {
+          createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', "Full name is required.");
+          return;
+        }
         fullName = element.value;
         employeId = element.dataset.employeeid;
       }
-    }
-
-    if (element.type === 'file') {
-      if (element.files.length !== 0) {
-        
+      if (element.type === 'file' && element.files?.length) {
         profilePictureName = element.files[0];
-        
       }
-      
-      
     }
-    
-  }
 
-  showSpinner()
-  const {findEmployee, errors} = await updateProfileData(fullName, profilePictureName, employeId);
+    if (!employeId) {
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Profile could not be updated. Please refresh the page.');
+      return;
+    }
 
-
-
-  if (!errors) {
-    currentEmployeeDataRef = [findEmployee];
-    showCurrentDataInPage([findEmployee]);
-    model.classList.remove("active");
-    previewFile.value = '';
-    previewImg.src = '';
-    previewImg.style.display = 'none';
-    closeImg.style.display = 'none';
-    hideSpinner();
-    createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', "Profile updated successfully!");
-  } else {
-    model.classList.remove("active");
-    previewFile.value = '';
-    previewImg.src = '';
-    previewImg.style.display = 'none';
-    closeImg.style.display = 'none';
-    hideSpinner()
-    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', `${errors.message}!`);
-
-  }
-});
+    showSpinner();
+    try {
+      const { findEmployee, errors } = await updateProfileData(fullName, profilePictureName, employeId);
+      if (!errors) {
+        currentEmployeeDataRef = [findEmployee];
+        showCurrentDataInPage([findEmployee]);
+        if (model) model.classList.remove("active");
+        if (previewFile) previewFile.value = '';
+        if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
+        if (closeImg) closeImg.style.display = 'none';
+        createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', "Profile updated successfully!");
+      } else {
+        if (model) model.classList.remove("active");
+        if (previewFile) previewFile.value = '';
+        if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
+        if (closeImg) closeImg.style.display = 'none';
+        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(errors, 'Profile update failed.'));
+      }
+    } catch (err) {
+      console.error('Profile update:', err);
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Profile update failed.'));
+    } finally {
+      hideSpinner();
+    }
+  });
+}
 
 // ————— Daily Work Update —————
 if (dailyUpdateForm) {
   dailyUpdateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const workDone = dailyUpdateForm.querySelector('#workDoneToday').value.trim();
-    const workPlanned = dailyUpdateForm.querySelector('#workPlannedNext').value.trim();
-    const blockers = dailyUpdateForm.querySelector('#blockers').value.trim();
+    const updateText = dailyUpdateForm.querySelector('#todayUpdate')?.value?.trim() ?? '';
 
-    if (!validateDailyUpdateForm(workDone, workPlanned, blockers)) return;
+    if (!validateDailyUpdateForm(updateText)) return;
     if (!currentEmployeeDataRef?.length) {
       createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Employee data not loaded.');
       return;
@@ -357,24 +417,23 @@ if (dailyUpdateForm) {
       return;
     }
 
-    const nowTs = Date.now();
-    const updateEntry = {
-      updateId: nowTs.toString(),
-      date: today,
-      workDone,
-      workPlanned,
-      blockers,
-      createdAt: nowTs,
-      status: 'submitted',
-      adminComments: [],
-    };
-
-    const record = currentEmployeeDataRef[0];
-    record.employeeData.dailyUpdates = record.employeeData.dailyUpdates || [];
-    record.employeeData.dailyUpdates.push(updateEntry);
-
+    if (submitDailyUpdateBtn) submitDailyUpdateBtn.disabled = true;
     showSpinner();
     try {
+      const nowTs = Date.now();
+      const updateEntry = {
+        updateId: nowTs.toString(),
+        date: today,
+        updateText,
+        createdAt: nowTs,
+        status: 'submitted',
+        adminComments: [],
+      };
+
+      const record = currentEmployeeDataRef[0];
+      record.employeeData.dailyUpdates = record.employeeData.dailyUpdates || [];
+      record.employeeData.dailyUpdates.push(updateEntry);
+
       await editEmployeeFromDatabase(record.employeeData, record.id);
       currentEmployeeDataRef = [{ ...record, employeeData: { ...record.employeeData } }];
       updateDailyUpdateUI(currentEmployeeDataRef);
@@ -382,7 +441,8 @@ if (dailyUpdateForm) {
       dailyUpdateForm.reset();
       createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', 'Daily update submitted successfully!');
     } catch (err) {
-      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', err?.message || 'Failed to submit update.');
+      if (submitDailyUpdateBtn) submitDailyUpdateBtn.disabled = false;
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Failed to submit update.'));
     } finally {
       hideSpinner();
     }

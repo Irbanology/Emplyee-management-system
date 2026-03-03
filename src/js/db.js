@@ -29,56 +29,74 @@ const loginAdminAndEmployee = async (email, password) => {
 };
 
 const logout = async () => {
-  await supabaseClient.auth.signOut();
+  try {
+    await supabaseClient.auth.signOut();
+  } catch (err) {
+    console.error('logout:', err);
+    throw new Error('Could not sign out. Please try again.');
+  }
 };
 
 
 const checkUserLoginOrNot = async () => {
-  const { data, error } = await supabaseClient.auth.getSession()
-  return data.session;
-
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
+    return data?.session ?? null;
+  } catch (err) {
+    console.error('checkUserLoginOrNot:', err);
+    return null;
+  }
 };
 
 
 const getCurrentUser = async () => {
-  const { data: { user } } = await supabaseClient.auth.getUser()
-
-  return user;
-
+  try {
+    const { data, error } = await supabaseClient.auth.getUser();
+    if (error) throw error;
+    return data?.user ?? null;
+  } catch (err) {
+    console.error('getCurrentUser:', err);
+    return null;
+  }
 };
 
 
 const createEmployeeDataInDatabase = async (employeeData) => {
+  try {
+    const { data: signUpData, error: signUpError } = await signUp(employeeData.email, employeeData.password);
+    if (signUpError) throw signUpError;
+    const newUser = signUpData?.user;
+    if (!newUser) throw new Error('User could not be created.');
+    employeeData.userId = newUser.id;
 
-  const { data: signUpData, error: signUpError } = await signUp(employeeData.email, employeeData.password);
-  if (signUpError) {
-    throw signUpError;
+    const { error: insertError } = await supabaseClient
+      .from('EmployeeData')
+      .insert({ employeeData });
+    if (insertError) throw insertError;
+
+    return await getEmployeeDataFromDatabase();
+  } catch (err) {
+    const msg = err?.message ?? err?.error_description ?? '';
+    if (msg.includes('already registered') || msg.includes('already exists')) {
+      throw new Error('This email is already registered.');
+    }
+    throw err;
   }
-  const newUser = signUpData?.user;
-  if (!newUser) {
-    throw new Error("User could not be created.");
-  }
-  employeeData.userId = newUser.id;
-
-  await supabaseClient
-    .from('EmployeeData')
-    .insert({ employeeData });
-
-  const getData = await getEmployeeDataFromDatabase();
-
-  return getData;
-
-}
+};
 
 
 const getEmployeeDataFromDatabase = async () => {
-  const { data } = await supabaseClient
-    .from('EmployeeData')
-    .select()
-
-
-  return data;
-
+  try {
+    const { data, error } = await supabaseClient
+      .from('EmployeeData')
+      .select();
+    if (error) throw error;
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error('getEmployeeDataFromDatabase:', err);
+    throw new Error(err?.message ?? 'Could not load data. Check your connection.');
+  }
 };
 
 
@@ -86,64 +104,67 @@ const getEmployeeDataFromDatabase = async () => {
 
 // Deletes employee: removes EmployeeData row by id only (no auth.admin — use backend/Dashboard to remove Auth user if needed).
 const deleteDataFromDatabase = async (tableRowId) => {
-  const { error } = await supabaseClient
-    .from('EmployeeData')
-    .delete()
-    .eq('id', tableRowId);
-  await getEmployeeDataFromDatabase();
-  return error;
+  try {
+    const { error } = await supabaseClient
+      .from('EmployeeData')
+      .delete()
+      .eq('id', tableRowId);
+    if (error) return error;
+    await getEmployeeDataFromDatabase();
+    return null;
+  } catch (err) {
+    console.error('deleteDataFromDatabase:', err);
+    return err instanceof Error ? err : new Error('Could not delete employee.');
+  }
 };
 
 // Updates employee row. Caller must pass full employeeData (e.g. merged with existing dailyUpdates).
 const editEmployeeFromDatabase = async (employeeData, tableRowId) => {
-  const { data, error } = await supabaseClient
-    .from('EmployeeData')
-    .update({ employeeData })
-    .eq('id', tableRowId)
-    .select();
-  console.log('editEmployeeFromDatabase response:', { data, error });
-  if (error) throw error;
-  const allData = await getEmployeeDataFromDatabase();
-  return allData;
+  try {
+    const { error } = await supabaseClient
+      .from('EmployeeData')
+      .update({ employeeData })
+      .eq('id', tableRowId)
+      .select();
+    if (error) throw error;
+    return await getEmployeeDataFromDatabase();
+  } catch (err) {
+    console.error('editEmployeeFromDatabase:', err);
+    throw new Error(err?.message ?? 'Could not save changes. Please try again.');
+  }
 };
 
 const updateProfileData = async (userName, image, employeeId) => {
   let fileData = null;
-  let errors = null;
+  let uploadError = null;
 
   if (image) {
-
-    const { data, error } = await supabaseClient
-      .storage
-      .from('images')
-      .upload(`${Date.now()}-${image.name}`, image, {
-        cacheControl: "3600",
-        upsert: false,
-      })
-
-    errors = error;
-    fileData = data;
+    try {
+      const { data, error } = await supabaseClient.storage
+        .from('images')
+        .upload(`${Date.now()}-${image.name}`, image, { cacheControl: '3600', upsert: false });
+      uploadError = error;
+      fileData = data;
+    } catch (err) {
+      console.error('Profile image upload:', err);
+      uploadError = err;
+    }
   }
 
   const currentEmployee = await getEmployeeDataFromDatabase();
-
-  const findEmployee = currentEmployee.find((data) => data.id === employeeId);
+  const findEmployee = currentEmployee.find((d) => String(d.id) === String(employeeId));
   if (!findEmployee || !findEmployee.employeeData) {
     throw new Error('Employee not found.');
   }
 
-  if (image) {
+  if (image && fileData?.fullPath) {
     findEmployee.employeeData.profilePicture = fileData.fullPath;
   }
 
   findEmployee.employeeData.fullName = userName;
 
   await editEmployeeFromDatabase(findEmployee.employeeData, employeeId);
-
-  return { findEmployee, errors };
-
-
-
+  return { findEmployee, errors: uploadError };
 };
 
 

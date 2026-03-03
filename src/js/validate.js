@@ -1,9 +1,9 @@
 import { getEmployeeDataFromDatabase } from "./db.js";
-import { createToastForNotification, hideSpinner, showSpinner } from "./utils.js";
-
-
+import { createToastForNotification, getErrorMessage } from "./utils.js";
 
 const validateForm = async function (form, editId) {
+  if (!form?.elements) return false;
+  try {
   const elements = form.elements;
   let isValid = true;
 
@@ -66,10 +66,14 @@ const validateForm = async function (form, editId) {
   
 
   if (isValid) {
-    saveFormData(form)
+    saveFormData(form);
   }
-  
   return isValid;
+  } catch (err) {
+    console.error('validateForm:', err);
+    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Validation failed. Please try again.'));
+    return false;
+  }
 }
 
 
@@ -85,39 +89,37 @@ function isValidPassword(password) {
 }
 
 // checkEMail is not same...
-async function isEmailSome (email) {
-  const data = await getEmployeeDataFromDatabase()
-  let isEMailSomeORnot = null;
-  const isEMailSomeCheck = data.find(({employeeData}) => employeeData.email === email);
-
-  if (typeof(isEMailSomeCheck) === 'object') {
-    isEMailSomeORnot = true
-  }else {
-    isEMailSomeORnot = false;
+async function isEmailSome(email) {
+  try {
+    const data = await getEmployeeDataFromDatabase();
+    const isEMailSomeCheck = (Array.isArray(data) ? data : []).find(
+      ({ employeeData }) => employeeData?.email === email
+    );
+    return typeof isEMailSomeCheck === 'object' && isEMailSomeCheck != null;
+  } catch (err) {
+    console.error('isEmailSome:', err);
+    return false;
   }
-  
-  return isEMailSomeORnot;
 }
 
 // Check if employee ID is already used
 async function isEmployeeIdTaken(employeeId) {
-  const data = await getEmployeeDataFromDatabase();
-  const found = data.find(({ employeeData }) => employeeData.employeeId === employeeId);
-  return !!found;
+  try {
+    const data = await getEmployeeDataFromDatabase();
+    const found = (Array.isArray(data) ? data : []).find(
+      ({ employeeData }) => employeeData?.employeeId === employeeId
+    );
+    return !!found;
+  } catch (err) {
+    console.error('isEmployeeIdTaken:', err);
+    return false;
+  }
 }
 
-// Validate daily work update form (all fields required)
-function validateDailyUpdateForm(workDone, workPlanned, blockers) {
-  if (!workDone || !workDone.trim()) {
-    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Work Done Today is required.');
-    return false;
-  }
-  if (!workPlanned || !workPlanned.trim()) {
-    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Work Planned Next is required.');
-    return false;
-  }
-  if (!blockers || !blockers.trim()) {
-    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Blockers field is required (use "None" if none).');
+// Validate daily work update form (single updateText field)
+function validateDailyUpdateForm(updateText) {
+  if (!updateText || !updateText.trim()) {
+    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', "Today's update is required.");
     return false;
   }
   return true;
