@@ -89,19 +89,25 @@
           </div>
           <div class="updates-not-submitted" id="updatesNotSubmitted"></div>
           <div class="updates-overview-wrapper">
-            <div class="updates-overview-table">
-              <div class="updates-overview-header">
-                <div class="updates-col updates-col-name">Name</div>
-                <div class="updates-col updates-col-update">Update</div>
-                <div class="updates-col updates-col-comments">Comments</div>
-              </div>
-              <div class="updates-overview-body" id="updatesListContainer">
-                <div class="empty-employee" id="noUpdatesPlaceholder">
-                  <span><i class="fa-solid fa-clipboard-list"></i></span>
-                  <h3>No daily updates yet.</h3>
-                </div>
-              </div>
-            </div>
+            <table class="updates-table">
+              <thead>
+                <tr>
+                  <th class="updates-th-name">Name</th>
+                  <th class="updates-th-update">Update</th>
+                  <th class="updates-th-comments">Comments</th>
+                </tr>
+              </thead>
+              <tbody id="updatesListContainer">
+                <tr class="updates-empty-row">
+                  <td colspan="3">
+                    <div class="empty-employee" id="noUpdatesPlaceholder">
+                      <span><i class="fa-solid fa-clipboard-list"></i></span>
+                      <h3>No daily updates yet.</h3>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
             <div class="updates-pagination" id="updatesPagination"></div>
           </div>
         </div>

@@ -100,13 +100,12 @@
 
   /* Daily Updates section – responsive */
   .daily-updates-section {
-    padding: 16px;
+    padding: 16px 0;
   }
 
   .updates-filters {
     flex-direction: column;
     align-items: stretch;
-    padding: 12px;
     gap: 12px;
   }
 
@@ -115,57 +114,72 @@
     min-width: 100%;
   }
 
-  /* Daily Updates Overview – mobile stacked cards */
-  .updates-overview-body {
-    max-height: 60vh;
-    padding: 8px;
+  /* Daily Updates table – mobile: stacked blocks per row */
+  .updates-table thead {
+    display: none;
   }
 
-  .updates-overview-header {
-    grid-template-columns: 1fr;
-    gap: 4px;
-    padding: 10px 16px;
+  .updates-table tbody tr.update-overview-row,
+  .updates-table tbody tr.updates-empty-row {
+    display: block;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 0;
+  }
+
+  .updates-table tbody tr.update-overview-row td,
+  .updates-table tbody tr.updates-empty-row td {
+    display: block;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .updates-table tbody tr.update-overview-row td:last-child,
+  .updates-table tbody tr.updates-empty-row td:last-child {
+    border-bottom: none;
+  }
+
+  .updates-table td.updates-col-name::before {
+    content: "Name";
+    display: block;
     font-size: 11px;
+    font-weight: 600;
+    color: #989797;
+    margin-bottom: 2px;
   }
 
-  .update-overview-row {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
+  .updates-table td.updates-col-update::before {
+    content: "Update";
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #989797;
+    margin-bottom: 2px;
   }
 
-  .update-overview-row .updates-col-name {
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  .updates-table td.updates-col-comments::before {
+    content: "Comments";
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #989797;
+    margin-bottom: 2px;
   }
 
-  .update-overview-row .updates-col-update {
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .update-overview-row .updates-col-comments {
-    padding-bottom: 0;
+  .updates-empty-row td::before {
+    display: none;
   }
 
   .update-row-preview {
     -webkit-line-clamp: 3;
   }
 
-  .update-overview-row .add-comment-btn,
-  .update-overview-row .submit-comment-btn {
-    width: 100%;
-  }
-
   .updates-pagination {
-    padding: 12px;
-    gap: 6px;
+    padding: 10px 0;
   }
 
   .pagination-btn {
-    min-width: 32px;
-    height: 32px;
+    min-width: 28px;
+    height: 28px;
     font-size: 12px;
   }
 }

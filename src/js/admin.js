@@ -471,6 +471,12 @@ function getUpdatePreviewText(u) {
   return escapeHtml(getUpdatePreviewRaw(u));
 }
 
+/** workDone only, 1–2 lines (ellipsis via CSS), for table Update column */
+function getWorkDonePreview(u) {
+  const raw = (u.workDone != null ? String(u.workDone).trim() : '') || '—';
+  return escapeHtml(raw);
+}
+
 function renderUpdatesList(updates) {
   const container = document.getElementById('updatesListContainer');
   const paginationEl = document.getElementById('updatesPagination');
@@ -484,7 +490,15 @@ function renderUpdatesList(updates) {
   const pageUpdates = updates.slice(start, start + UPDATES_PAGE_SIZE);
 
   if (!updates.length) {
-    container.innerHTML = '<div class="empty-employee" id="noUpdatesPlaceholder"><span><i class="fa-solid fa-clipboard-list"></i></span><h3>No daily updates match the filters.</h3></div>';
+    container.innerHTML = `
+      <tr class="updates-empty-row">
+        <td colspan="3">
+          <div class="empty-employee" id="noUpdatesPlaceholder">
+            <span><i class="fa-solid fa-clipboard-list"></i></span>
+            <h3>No daily updates match the filters.</h3>
+          </div>
+        </td>
+      </tr>`;
     return;
   }
 
@@ -492,29 +506,30 @@ function renderUpdatesList(updates) {
     const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
     const latestComment = comments.length ? (comments[comments.length - 1].commentText || '') : '';
     const nameColor = getNameColor(u.employeeName);
+    const workDoneTitle = (u.workDone != null ? String(u.workDone).trim() : '') || '—';
 
-    const row = document.createElement('div');
+    const row = document.createElement('tr');
     row.className = 'update-overview-row';
     row.setAttribute('data-db-id', u.dbId);
     row.setAttribute('data-update-id', u.updateId || '');
 
     row.innerHTML = `
-      <div class="updates-col updates-col-name">
+      <td class="updates-col updates-col-name">
         <span class="update-row-name" style="color:${nameColor}">${escapeHtml(u.employeeName)}</span>
-        <span class="update-row-id-badge">${escapeHtml(u.employeeId)}</span>
-      </div>
-      <div class="updates-col updates-col-update">
-        <p class="update-row-preview" title="${escapeHtml(getUpdatePreviewRaw(u))}">${getUpdatePreviewText(u)}</p>
-        <button type="button" class="btn-view-full" data-action="view-full"><span><i class="fa-solid fa-external-link-alt"></i></span> View Full</button>
-      </div>
-      <div class="updates-col updates-col-comments">
-        <p class="update-row-comment-preview">${latestComment ? escapeHtml(latestComment) : 'No comments yet'}</p>
-        <button type="button" class="btn-green add-comment-btn" data-action="add-comment"><span><i class="fa-solid fa-comment-dots"></i></span> Add Comment</button>
+        <span class="update-row-id-badge">[${escapeHtml(u.employeeId)}]</span>
+      </td>
+      <td class="updates-col updates-col-update">
+        <p class="update-row-preview" title="${escapeHtml(workDoneTitle)}">${getWorkDonePreview(u)}</p>
+        <button type="button" class="link-view" data-action="view-full">View</button>
+      </td>
+      <td class="updates-col updates-col-comments">
+        <p class="update-row-comment-preview">${latestComment ? escapeHtml(latestComment) : 'No comments'}</p>
+        <button type="button" class="link-add" data-action="add-comment">+ Add</button>
         <div class="add-comment-form" style="display: none;">
           <textarea class="admin-comment-input" rows="2" placeholder="Add your comment..."></textarea>
-          <button type="button" class="btn-green submit-comment-btn"><span><i class="fa-solid fa-paper-plane"></i></span> Submit Comment</button>
+          <button type="button" class="btn-green submit-comment-btn">Submit</button>
         </div>
-      </div>
+      </td>
     `;
     container.appendChild(row);
   });
@@ -738,8 +753,9 @@ const updatesListContainerEl = document.getElementById('updatesListContainer');
 if (updatesListContainerEl) {
   updatesListContainerEl.addEventListener('click', async (e) => {
     const target = e.target;
-    const row = target.closest('.update-overview-row');
-    if (!row) return;
+    const row = target.closest('tr');
+    if (!row || row.classList.contains('updates-empty-row')) return;
+    if (!row.classList.contains('update-overview-row')) return;
 
     const dbId = row.getAttribute('data-db-id');
     const updateId = row.getAttribute('data-update-id');
