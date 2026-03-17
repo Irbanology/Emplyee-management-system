@@ -110,7 +110,6 @@ const deleteDataFromDatabase = async (tableRowId) => {
       .delete()
       .eq('id', tableRowId);
     if (error) return error;
-    await getEmployeeDataFromDatabase();
     return null;
   } catch (err) {
     console.error('deleteDataFromDatabase:', err);

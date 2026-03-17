@@ -14,6 +14,7 @@ const previewFile = document.querySelector('#profile-pic');
 const closeImg = document.querySelector('.closeImg');
 const logoutBtn = document.querySelector('.logout');
 const dailyUpdateForm = document.getElementById('dailyUpdateForm');
+const todayUpdateTextarea = document.getElementById('todayUpdate');
 const dailyUpdateStatus = document.getElementById('dailyUpdateStatus');
 const submitDailyUpdateBtn = document.getElementById('submitDailyUpdateBtn');
 
@@ -183,6 +184,18 @@ function escapeHtmlEmployee(text) {
   return div.innerHTML;
 }
 
+/** Fast HTML escape for modal content (no DOM, avoids main-thread jank) */
+function escapeHtmlFast(str) {
+  if (str == null || str === '') return '—';
+  const s = String(str);
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function trimPreview(str, maxLen = 100) {
   if (str == null) return '—';
   const t = String(str).trim();
@@ -228,24 +241,24 @@ function renderMyUpdates(employeeData) {
   }).join('');
 }
 
-// Open full update in modal (uses currentEmployeeDataRef)
+// Cached modal elements (avoid repeated getElementById on open)
+const updateDetailModalEl = document.getElementById('updateDetailModal');
+const updateDetailTitleEl = document.getElementById('updateDetailTitle');
+const updateDetailBodyEl = document.getElementById('updateDetailBody');
+
+// Open full update in modal (uses currentEmployeeDataRef). Defers DOM work to rAF for responsive click.
 function openUpdateDetailModal(updateId) {
   if (!currentEmployeeDataRef?.length) return;
   const data = currentEmployeeDataRef[0]?.employeeData;
   const updates = Array.isArray(data?.dailyUpdates) ? data.dailyUpdates : [];
   const u = updates.find((x) => String(x.updateId) === String(updateId));
   if (!u) return;
+  if (!updateDetailModalEl || !updateDetailTitleEl || !updateDetailBodyEl) return;
 
-  const modal = document.getElementById('updateDetailModal');
-  const titleEl = document.getElementById('updateDetailTitle');
-  const bodyEl = document.getElementById('updateDetailBody');
-  if (!modal || !titleEl || !bodyEl) return;
-
-  titleEl.textContent = `Update — ${formatUpdateDate(u.date)}`;
-
+  const titleText = `Update — ${formatUpdateDate(u.date)}`;
   const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
   const commentsHtml = comments.length
-    ? comments.map((c) => `<div class="update-detail-comment"><span class="update-detail-comment-text">${escapeHtmlEmployee(c.commentText || '')}</span></div>`).join('')
+    ? comments.map((c) => `<div class="update-detail-comment"><span class="update-detail-comment-text">${escapeHtmlFast(c.commentText || '')}</span></div>`).join('')
     : '<p class="update-detail-no-comments">No admin comments yet.</p>';
 
   const hasUpdateText = u.updateText != null && String(u.updateText).trim() !== '';
@@ -253,7 +266,7 @@ function openUpdateDetailModal(updateId) {
     ? `
     <div class="update-detail-section">
       <p class="update-detail-label">Today's Update</p>
-      <div class="update-detail-text">${escapeHtmlEmployee(u.updateText || '—')}</div>
+      <div class="update-detail-text">${escapeHtmlFast(u.updateText || '—')}</div>
     </div>
     <div class="update-detail-section update-detail-admin">
       <p class="update-detail-label">Admin feedback</p>
@@ -263,32 +276,34 @@ function openUpdateDetailModal(updateId) {
     : `
     <div class="update-detail-section">
       <p class="update-detail-label">Work Done</p>
-      <div class="update-detail-text">${escapeHtmlEmployee(u.workDone || '—')}</div>
+      <div class="update-detail-text">${escapeHtmlFast(u.workDone || '—')}</div>
     </div>
     <div class="update-detail-section">
       <p class="update-detail-label">Work Planned</p>
-      <div class="update-detail-text">${escapeHtmlEmployee(u.workPlanned || '—')}</div>
+      <div class="update-detail-text">${escapeHtmlFast(u.workPlanned || '—')}</div>
     </div>
     <div class="update-detail-section">
       <p class="update-detail-label">Blockers</p>
-      <div class="update-detail-text">${escapeHtmlEmployee(u.blockers || '—')}</div>
+      <div class="update-detail-text">${escapeHtmlFast(u.blockers || '—')}</div>
     </div>
     <div class="update-detail-section update-detail-admin">
       <p class="update-detail-label">Admin feedback</p>
       <div class="update-detail-comments-list">${commentsHtml}</div>
     </div>
   `;
-  bodyEl.innerHTML = contentHtml;
 
-  modal.classList.add('active');
-  modal.setAttribute('aria-hidden', 'false');
+  requestAnimationFrame(() => {
+    updateDetailTitleEl.textContent = titleText;
+    updateDetailBodyEl.innerHTML = contentHtml;
+    updateDetailModalEl.classList.add('active');
+    updateDetailModalEl.setAttribute('aria-hidden', 'false');
+  });
 }
 
 function closeUpdateDetailModal() {
-  const modal = document.getElementById('updateDetailModal');
-  if (modal) {
-    modal.classList.remove('active');
-    modal.setAttribute('aria-hidden', 'true');
+  if (updateDetailModalEl) {
+    updateDetailModalEl.classList.remove('active');
+    updateDetailModalEl.setAttribute('aria-hidden', 'true');
   }
 }
 
@@ -309,7 +324,7 @@ document.getElementById('updateDetailClose')?.addEventListener('click', closeUpd
 document.querySelector('.update-detail-backdrop')?.addEventListener('click', closeUpdateDetailModal);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeUpdateDetailModal();
-});
+}, { passive: true });
 
 // PREVIEW IMG CODE FOR SHOW EMPLOYEE PROFILE IMG PREVIEW...
 if (previewFile) {
@@ -392,7 +407,7 @@ if (profileForm) {
 if (dailyUpdateForm) {
   dailyUpdateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const updateText = dailyUpdateForm.querySelector('#todayUpdate').value.trim();
+    const updateText = (todayUpdateTextarea?.value ?? '').trim();
 
     if (!validateDailyUpdateForm(updateText)) return;
     if (!currentEmployeeDataRef?.length) {

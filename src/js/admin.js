@@ -1,5 +1,5 @@
 import { validateForm, employeeData } from "./validate.js";
-import { createToastForNotification, formatUpdateDate, getErrorMessage, getRelativeTime, hideSpinner, showLoading, showSpinner } from "./utils.js";
+import { createToastForNotification, formatUpdateDate, getErrorMessage, getRelativeTime, hideLoading, hideSpinner, showLoading, showSpinner } from "./utils.js";
 import { 
   createEmployeeDataInDatabase,
   getEmployeeDataFromDatabase,
@@ -22,7 +22,7 @@ const form = document.getElementById("employeeForm");
 const logoutBtn = document.querySelector('.logout-btn');
 
 
-// CHECK ADMIN AUTHHENTICATED OR NOT...
+// CHECK ADMIN AUTHENTICATED OR NOT...
 const sessionCheckForAdmin = async () => {
   try {
     const session = await checkUserLoginOrNot();
@@ -30,14 +30,15 @@ const sessionCheckForAdmin = async () => {
       window.location.href = './index.html';
       return;
     }
+    hideLoading();
   } catch (err) {
     console.error('sessionCheckForAdmin:', err);
     window.location.href = './index.html';
   }
 };
 
-sessionCheckForAdmin().catch(() => {});
 showLoading("Loading Admin Panel...");
+sessionCheckForAdmin().catch(() => {});
 
 
 if (logoutBtn) {
@@ -117,6 +118,21 @@ if (openModal && modal) {
   openModal.addEventListener("click", () => modal.classList.add('active'));
 }
 
+// Joining date: enforce 4-digit year only (clear invalid values on change)
+const joiningDateEl = document.getElementById('joiningDate');
+if (joiningDateEl) {
+  joiningDateEl.addEventListener('change', function () {
+    const val = this.value.trim();
+    if (!val) return;
+    const match = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const year = match ? parseInt(match[1], 10) : NaN;
+    if (!match || year < 1000 || year > 9999) {
+      this.value = '';
+      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Joining date year must be exactly 4 digits (e.g. 2025).');
+    }
+  });
+}
+
 // Close modal
 if (closeModal && modal && form) {
   closeModal.addEventListener("click", () => {
@@ -169,7 +185,6 @@ if (form) {
 
   if (editId && isValid) {
     showSpinner();
-    console.log("EDITING ID:", editId);
     try {
       const allData = await getEmployeeDataFromDatabase();
       const existing = allData.find((e) => String(e.id) === String(editId));
@@ -179,9 +194,9 @@ if (form) {
         userId: existing?.employeeData?.userId,
         profilePicture: existing?.employeeData?.profilePicture ?? null,
       };
-      console.log("EDITING employeeData (merged):", merged);
-      const editEmployeeData = await editEmployeeFromDatabase(merged, editId);
-      showEmployeeCard(editEmployeeData);
+      await editEmployeeFromDatabase(merged, editId);
+      const allDataAfterEdit = await getEmployeeDataFromDatabase();
+      showEmployeeCard(allDataAfterEdit);
       const firstRole = document.querySelector('.role');
       if (firstRole) {
         roles.forEach(r => r.classList.remove('active'));
@@ -248,18 +263,21 @@ const showEmployeeCard = (employeeData) => {
   list.forEach(({ id, employeeData }) => {
     if (!employeeData) return;
     const empId = employeeData.employeeId || '—';
-    // No id on card — only class and data-employeeid so each click targets the correct card
+    // Escape user/DB content to prevent XSS
+    const safeName = escapeHtml(employeeData.fullName);
+    const safeId = escapeHtml(empId);
+    const safeDept = escapeHtml(employeeData.department);
+    const safeDesc = escapeHtml(employeeData.description);
+    const imgSrc = !employeeData.profilePicture ? './assets/images/human-img.png' : `${supabaseUrl}/storage/v1/object/public/${employeeData.profilePicture}`;
     employeeContainer.innerHTML += `<div class="employee-card" data-employeeid="${id}">
                 <div class="card-header">
-                  <img src="${!employeeData.profilePicture ? "./assets/images/human-img.png" : `${supabaseUrl}/storage/v1/object/public/${employeeData.profilePicture}` }" alt="Profile Picture" class="profile-pic">
+                  <img src="${imgSrc}" alt="Profile Picture" class="profile-pic">
                 </div>
                 <div class="card-body">
-                  <h2 class="employee-name">${employeeData.fullName}</h2>
-                  <p class="employee-id-small">ID: ${empId}</p>
-                  <p class="employee-department">Department: ${employeeData.department}</p>
-                  <p class="employee-description">
-                   ${employeeData.description}
-                  </p>
+                  <h2 class="employee-name">${safeName}</h2>
+                  <p class="employee-id-small">ID: ${safeId}</p>
+                  <p class="employee-department">Department: ${safeDept}</p>
+                  <p class="employee-description">${safeDesc}</p>
                   <div class="date-div">
                     <p>${getRelativeTime(employeeData.createdAt)}</p>
                   </div>
@@ -304,23 +322,29 @@ const showDataInEmployeeDetailModel = ({ id, employeeData }) => {
   if (!employeeModal) return;
   const openedEmployeeRowId = id;
 
+  const safeFullName = escapeHtml(employeeData?.fullName);
+  const safeEmployeeId = escapeHtml(employeeData?.employeeId || '—');
+  const safeDepartment = escapeHtml(employeeData?.department);
+  const safeEmail = escapeHtml(employeeData?.email);
+  const safeJoiningDate = escapeHtml(employeeData?.joiningDate);
+  const modalImgSrc = !employeeData?.profilePicture ? './assets/images/human-img.png' : `${supabaseUrl}/storage/v1/object/public/${employeeData.profilePicture}`;
   employeeModal.innerHTML = `<div class="modal-content employee-detail">
           <span id="closeEmployeeModal" class="close" >&times;</span>
           <div class="cover-video">
             <video src="./assets/videos/cover-video.mp4" muted autoplay loop alt='cover video'></video>
           </div>
           <div class="profile-section">
-            <img src="${!employeeData.profilePicture ? "./assets/images/human-img.png" : `${supabaseUrl}/storage/v1/object/public/${employeeData.profilePicture}` }" alt="Profile Picture" class="profile-pic-modal">
-            <h1>${employeeData?.fullName}</h1>
-            <p>Employee ID: <span>${employeeData?.employeeId || '—'}</span></p>
-            <p>Department  <span>${employeeData?.department}</span></p>
+            <img src="${modalImgSrc}" alt="Profile Picture" class="profile-pic-modal">
+            <h1>${safeFullName}</h1>
+            <p>Employee ID: <span>${safeEmployeeId}</span></p>
+            <p>Department  <span>${safeDepartment}</span></p>
           </div>
 
           <div class="details">
             <h2>Employee Personal Information:</h2>
             <ul>
-                <li><strong>Email:</strong> ${employeeData?.email}</li>
-                <li><strong>Joining Date:</strong> ${employeeData?.joiningDate}</li>
+                <li><strong>Email:</strong> ${safeEmail}</li>
+                <li><strong>Joining Date:</strong> ${safeJoiningDate}</li>
             </ul>
           </div>
 
@@ -649,7 +673,10 @@ async function loadDailyUpdatesView() {
     if (filterEmployee) {
       filterEmployee.innerHTML = '<option value="">All Employees</option>';
     data.forEach(({ employeeData: emp }) => {
-      if (filterEmployee) filterEmployee.innerHTML += `<option value="${emp.email}">${emp.fullName} (${emp.employeeId || emp.email})</option>`;
+      if (filterEmployee) {
+        const optValue = String(emp.email ?? '').replace(/"/g, '&quot;');
+        filterEmployee.innerHTML += `<option value="${optValue}">${escapeHtml(emp.fullName)} (${escapeHtml(emp.employeeId || emp.email)})</option>`;
+      }
     });
     }
 
@@ -828,7 +855,8 @@ if (updatesListContainerEl) {
 
         employeeRecord.employeeData.dailyUpdates = updatedUpdates;
 
-        const updatedAllData = await editEmployeeFromDatabase(employeeRecord.employeeData, employeeRecord.id);
+        await editEmployeeFromDatabase(employeeRecord.employeeData, employeeRecord.id);
+        const updatedAllData = await getEmployeeDataFromDatabase();
         allUpdatesAggregate = aggregateAllUpdates(updatedAllData);
         currentFilteredUpdates = allUpdatesAggregate.filter((u) => {
           const dateFilter = document.getElementById('filterUpdateDate').value;

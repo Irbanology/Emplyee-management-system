@@ -40,7 +40,10 @@ const createToastForNotification = function (type, icon, title, text) {
   notifications.appendChild(newToast);
   const closeBtn = newToast.querySelector('.fa-xmark');
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => newToast.remove());
+    closeBtn.addEventListener('click', () => {
+      if (newToast.timeOut) clearTimeout(newToast.timeOut);
+      newToast.remove();
+    });
   }
   newToast.timeOut = setTimeout(() => newToast.remove(), 5000);
 };
@@ -76,7 +79,9 @@ const getRelativeTime = function (milliseconds) {
     const hour = Math.floor(minute / 60);
     const day = Math.floor(hour / 24);
     
-    return minute < 1 ? 'just now' : minute < 60 ? `${minute} min ago` : hour  < 24 ? `${hour} hour ago` : `${day} day ago`;
+    const hourStr = hour === 1 ? 'hour' : 'hours';
+    const dayStr = day === 1 ? 'day' : 'days';
+    return minute < 1 ? 'just now' : minute < 60 ? `${minute} min ago` : hour < 24 ? `${hour} ${hourStr} ago` : `${day} ${dayStr} ago`;
 };
 
 

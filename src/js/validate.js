@@ -54,6 +54,22 @@ const validateForm = async function (form, editId) {
         }
       }
     }
+
+    // Joining date: year must be exactly 4 digits (1000–9999)
+    if (element.name === "joiningDate" && element.value.trim()) {
+      const dateVal = element.value.trim();
+      const match = dateVal.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) {
+        isValid = false;
+        createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', "Joining date must be a valid date with a 4-digit year (e.g. 2025).");
+      } else {
+        const year = parseInt(match[1], 10);
+        if (year < 1000 || year > 9999) {
+          isValid = false;
+          createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', "Joining date year must be exactly 4 digits (e.g. 2025).");
+        }
+      }
+    }
   }
 
   // Employee ID is required (for new employees and edit)

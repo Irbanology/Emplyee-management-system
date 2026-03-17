@@ -1022,6 +1022,28 @@ form {
   flex-direction: column;
 }
 
+/* Add Employee modal form: align button with inputs (same width & spacing) */
+.modal-content form input,
+.modal-content form select,
+.modal-content form textarea {
+  width: 100%;
+  max-width: 100%;
+}
+
+.modal-content form .form-group textarea {
+  min-width: 0;
+  max-width: none;
+}
+
+.modal-content form .btn-green {
+  width: 100%;
+  display: block;
+  margin-top: 8px;
+  margin-left: 0;
+  margin-right: 0;
+  box-sizing: border-box;
+}
+
 .form-group {
   margin-bottom: 16px;
 }
