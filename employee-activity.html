@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="./src/css/style.css" />
+  <link rel="stylesheet" href="./src/css/mediaquery.css" />
+  <link rel="stylesheet" href="./src/css/toast.css" />
+  <link rel="stylesheet" href="./src/css/spinner.css" />
+  <link rel="stylesheet" href="./src/css/loading.css" />
+  <link rel="stylesheet" href="./src/css/activity.css" />
+  <link rel="shortcut icon" href="./assets/images/favico.png" type="image/x-icon" />
+  <title>Employee Activity</title>
+</head>
+
+<body>
+  <div class="container activity-page">
+    <main class="main-content">
+      <header class="admin-header activity-header">
+        <div class="activity-header-left">
+          <button type="button" class="activity-back-btn" id="activityBackBtn" title="Back to Admin">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div class="activity-header-title">
+            <h2 id="activityPageTitle">Employee Activity</h2>
+            <p class="activity-subtitle" id="activityPageSubtitle">All updates and insights</p>
+          </div>
+        </div>
+        <div class="logout-title">
+          <button type="button" class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle theme"
+            title="Toggle theme">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="activity-shell" id="activityShell">
+          <div class="activity-hero">
+            <div class="activity-hero-profile">
+              <img id="activityProfilePic" class="activity-profile-pic" src="./assets/images/human-img.png"
+                alt="Profile picture" />
+              <div class="activity-hero-meta">
+                <h1 class="activity-name" id="activityEmployeeName">—</h1>
+                <div class="activity-meta-row">
+                  <span class="meta-chip" id="activityEmployeeId">ID: —</span>
+                  <span class="meta-chip" id="activityEmployeeDept">Department: —</span>
+                </div>
+              </div>
+            </div>
+            <div class="activity-hero-right">
+              <span class="activity-status" id="activityTodayStatus">
+                <i class="fa-solid fa-circle-xmark"></i> —
+              </span>
+              <p class="activity-streak" id="activityStreakText">Current Streak: — days</p>
+            </div>
+          </div>
+
+          <div class="activity-stats" id="activityStats"></div>
+
+          <div class="activity-grid-wrap" id="activityGridWrap"></div>
+
+          <div class="activity-updates-card">
+            <div class="activity-updates-header">
+              <h2>All updates</h2>
+              <div class="activity-updates-tools">
+                <input id="activitySearch" class="activity-search" type="search" placeholder="Search updates..." />
+                <select id="activityMonthFilter" class="activity-month-filter" aria-label="Filter by month"></select>
+              </div>
+            </div>
+            <div class="activity-updates-list" id="activityUpdatesList"></div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>Alasoft Team &copy; 2026</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Toast messages -->
+  <div class="notifications"></div>
+
+  <!-- SPINNER FOR LOADING -->
+  <div id="spinner" class="spinner-overlay">
+    <div class="spinner"></div>
+  </div>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="./src/js/employee-activity.js"></script>
+
+</html>
+

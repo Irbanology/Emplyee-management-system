@@ -1,0 +1,336 @@
+/* Full Activity page – uses Admin theme tokens from style.css */
+.activity-page .main-content {
+  min-height: 100vh;
+}
+
+.activity-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.activity-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.activity-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.activity-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.activity-header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.activity-subtitle {
+  margin: 0;
+  color: #989797;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-shell {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.activity-hero {
+  width: 100%;
+  background-color: #1B1B1B;
+  border-radius: 12px;
+  padding: 18px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.activity-hero-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.activity-profile-pic {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(66, 222, 223, 0.8);
+  flex-shrink: 0;
+}
+
+.activity-hero-meta {
+  min-width: 0;
+}
+
+.activity-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-meta-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #e5e7eb;
+}
+
+.activity-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.activity-streak {
+  margin: 0;
+  font-size: 12px;
+  color: #989797;
+  font-weight: 600;
+}
+
+.activity-grid-wrap {
+  margin-top: 12px;
+}
+
+/* Reuse grid visuals (same class names as modal) with subtle spacing */
+.activity-grid-wrap .activity-grid-hint {
+  margin: 0 0 8px 0;
+}
+
+.activity-updates-card {
+  margin-top: 16px;
+  background-color: #1B1B1B;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.activity-updates-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.activity-updates-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.activity-updates-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.activity-search,
+.activity-month-filter {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #252525;
+  color: #fff;
+  font-size: 13px;
+}
+
+.activity-search {
+  min-width: min(320px, 72vw);
+}
+
+.activity-updates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activity-update-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.activity-update-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.activity-update-date {
+  font-weight: 700;
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+.activity-update-status {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.activity-update-status.reviewed {
+  background-color: rgba(209, 250, 229, 0.2);
+  color: #34d399;
+}
+
+.activity-update-status.submitted {
+  background-color: rgba(254, 226, 226, 0.2);
+  color: #f87171;
+}
+
+.activity-update-body {
+  display: grid;
+  gap: 10px;
+}
+
+.activity-update-field-label {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  color: #989797;
+  font-weight: 600;
+}
+
+.activity-update-field-text {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #e0e0e0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+  font-size: 13px;
+}
+
+.activity-empty {
+  padding: 22px 8px;
+  text-align: center;
+  color: #989797;
+  font-weight: 500;
+}
+
+/* Light theme */
+body[data-theme="light"] .activity-hero,
+body[data-theme="light"] .activity-updates-card {
+  background-color: #f6f7f9;
+  border-color: rgba(16, 24, 40, 0.06);
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+}
+
+body[data-theme="light"] .activity-name,
+body[data-theme="light"] .activity-updates-header h2 {
+  color: #1f2937;
+}
+
+body[data-theme="light"] .activity-subtitle,
+body[data-theme="light"] .activity-streak {
+  color: #5b6677;
+}
+
+body[data-theme="light"] .meta-chip {
+  background: rgba(16, 24, 40, 0.04);
+  border-color: rgba(16, 24, 40, 0.10);
+  color: #253044;
+}
+
+body[data-theme="light"] .activity-search,
+body[data-theme="light"] .activity-month-filter {
+  background-color: #e9edf3;
+  color: #1f2937;
+  border-color: rgba(16, 24, 40, 0.14);
+}
+
+body[data-theme="light"] .activity-update-item {
+  background: rgba(16, 24, 40, 0.03);
+  border-color: rgba(16, 24, 40, 0.08);
+}
+
+body[data-theme="light"] .activity-update-date {
+  color: #253044;
+}
+
+body[data-theme="light"] .activity-update-field-text {
+  background: #e9edf3;
+  border-color: rgba(16, 24, 40, 0.10);
+  color: #253044;
+}
+
+body[data-theme="light"] .activity-back-btn {
+  border-color: rgba(16, 24, 40, 0.14);
+  background: rgba(16, 24, 40, 0.04);
+  color: #1f2937;
+}
+
+body[data-theme="light"] .activity-back-btn:hover {
+  background: rgba(16, 24, 40, 0.07);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .activity-hero-right {
+    width: 100%;
+    align-items: flex-start;
+  }
+  .activity-search {
+    min-width: 100%;
+  }
+}
+

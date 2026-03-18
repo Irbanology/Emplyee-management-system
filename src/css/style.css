@@ -561,15 +561,20 @@ body[data-theme="light"] .employee-detail .details strong {
   background-color: #de4a4a;
   color: #fff;
   font-size: 12px;
-  padding: 8px 15px;
+  padding: 10px 16px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .logout-btn:hover {
@@ -670,7 +675,8 @@ body[data-theme="light"] .employee-detail .details strong {
 /* General Card Styling */
 .employee-card {
   position: relative;
-  width: 300px;
+  width: 100%;
+  max-width: 340px;
   min-height: 350px;
   border-radius: 16px;
   background-color: #1F1F1F;
@@ -751,6 +757,7 @@ body[data-theme="light"] .employee-detail .details strong {
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -821,12 +828,13 @@ footer p {
 .updates-filters input,
 .updates-filters select {
   padding: 6px 10px;
-  border-radius: 4px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background-color: #252525;
   color: #fff;
   font-size: 13px;
   min-width: 140px;
+  min-height: 40px;
 }
 
 .updates-filters select {
@@ -1234,15 +1242,20 @@ footer p {
   background-color: #42DEDF;
   color: #1a1a1a;
   font-size: 12px;
-  padding: 10px 20px;
+  padding: 10px 16px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .modal button:hover,
@@ -1367,22 +1380,22 @@ label {
 }
 
 input, select, textarea {
-  width: 97%;
-  padding: 10px;
+  width: 100%;
+  padding: 10px 12px;
   border: 1px solid #444;
-  border-radius: 5px;
+  border-radius: 10px;
   background-color: #333;
   color: #fff;
-  font-size: 1rem;
+  font-size: 14px;
 }
 
 .form-group select {
-    width: 97%;
+    width: 100%;
 }
 
 .form-group textarea {
-    max-width: 594px;
-    min-width: 300px;
+    max-width: none;
+    min-width: 0;
     max-height: 125px;
     min-height: 50px;
 }
@@ -1489,6 +1502,29 @@ input:read-only {
  white-space: nowrap;
 }
 
+/* Employee detail: optional short description (1–2 lines) */
+.employee-short-desc {
+  margin: 8px 0 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #9ca3af;
+  font-size: 13px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+body[data-theme="light"] .employee-short-desc {
+  background: rgba(16, 24, 40, 0.03);
+  border-color: rgba(16, 24, 40, 0.08);
+  color: #475467;
+}
+
 .btns {
   width: 100%;
   display: flex;
@@ -1519,6 +1555,223 @@ input:read-only {
 
 
 
+
+/* ————— Employee Activity panel (Admin: employee detail modal) ————— */
+.activity-panel {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.activity-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.activity-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.activity-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.activity-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e7eb;
+}
+
+.activity-status.active {
+  border-color: rgba(66, 222, 223, 0.35);
+  background: rgba(66, 222, 223, 0.12);
+  color: #42DEDF;
+}
+
+.activity-status.missed {
+  border-color: rgba(249, 73, 73, 0.30);
+  background: rgba(249, 73, 73, 0.12);
+  color: #ff8b8b;
+}
+
+/* “View Full Activity” should look like a secondary action */
+.activity-view-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: none !important;
+}
+
+.activity-view-btn:hover {
+  background: rgba(117, 127, 249, 0.22) !important;
+  border-color: rgba(117, 127, 249, 0.30) !important;
+  color: #fff !important;
+}
+
+.activity-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.activity-stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+
+.stat-label {
+  margin: 0 0 4px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #989797;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-suffix {
+  font-size: 12px;
+  font-weight: 600;
+  color: #989797;
+}
+
+.activity-grid-wrap {
+  margin-top: 4px;
+}
+
+.activity-grid-hint {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #989797;
+}
+
+.activity-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 10px);
+  grid-auto-columns: 10px;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+}
+
+.activity-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.activity-cell.active {
+  background: rgba(66, 222, 223, 0.80);
+}
+
+.activity-cell.today {
+  outline: 2px solid rgba(117, 127, 249, 0.7);
+  outline-offset: 1px;
+}
+
+/* Light theme tweaks for activity panel */
+body[data-theme="light"] .activity-panel {
+  border-top-color: rgba(16, 24, 40, 0.10);
+}
+
+body[data-theme="light"] .activity-title {
+  color: #1f2937;
+}
+
+body[data-theme="light"] .activity-status {
+  border-color: rgba(16, 24, 40, 0.10);
+  background: rgba(16, 24, 40, 0.04);
+  color: #253044;
+}
+
+body[data-theme="light"] .activity-status.active {
+  background: rgba(66, 222, 223, 0.14);
+  color: #1f2937;
+}
+
+body[data-theme="light"] .activity-status.missed {
+  background: rgba(249, 73, 73, 0.10);
+  color: #8a1f1f;
+}
+
+body[data-theme="light"] .activity-view-btn {
+  background: rgba(16, 24, 40, 0.04) !important;
+  color: #1f2937 !important;
+  border-color: rgba(16, 24, 40, 0.10) !important;
+}
+
+body[data-theme="light"] .activity-view-btn:hover {
+  background: rgba(117, 127, 249, 0.14) !important;
+  border-color: rgba(117, 127, 249, 0.22) !important;
+  color: #1f2937 !important;
+}
+
+body[data-theme="light"] .activity-stat-card {
+  background: rgba(16, 24, 40, 0.03);
+  border-color: rgba(16, 24, 40, 0.08);
+}
+
+body[data-theme="light"] .stat-value {
+  color: #1f2937;
+}
+
+body[data-theme="light"] .activity-grid {
+  background: rgba(16, 24, 40, 0.02);
+  border-color: rgba(16, 24, 40, 0.08);
+}
+
+body[data-theme="light"] .activity-cell {
+  background: rgba(16, 24, 40, 0.08);
+}
+
+/* Responsive layout for stats grid */
+@media (max-width: 768px) {
+  .activity-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .activity-stats {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Animations */
 @keyframes fadeIn {

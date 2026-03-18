@@ -388,6 +388,37 @@ const showDataInEmployeeDetailModel = ({ id, employeeData }) => {
   const safeEmail = escapeHtml(employeeData?.email);
   const safeJoiningDate = escapeHtml(employeeData?.joiningDate);
   const modalImgSrc = !employeeData?.profilePicture ? './assets/images/human-img.png' : `${supabaseUrl}/storage/v1/object/public/${employeeData.profilePicture}`;
+  
+  const updates = normalizeUpdatesArray(employeeData);
+  const submittedDates = getUniqueSubmittedDates(updates);
+  const todayIso = getTodayStr();
+  const isActiveToday = submittedDates.has(todayIso);
+
+  const totalUpdates = updates.length;
+  const monthStartIso = getMonthStartIso(new Date());
+  const updatesThisMonth = updates.filter((u) => u.date >= monthStartIso && u.date <= todayIso).length;
+  const daysSoFarThisMonth = countDaysInclusive(monthStartIso, todayIso);
+  const submittedDaysThisMonth = (() => {
+    let c = 0;
+    for (const d of submittedDates) {
+      if (d >= monthStartIso && d <= todayIso) c++;
+    }
+    return c;
+  })();
+  const missedDaysThisMonth = Math.max(0, daysSoFarThisMonth - submittedDaysThisMonth);
+  const streak = computeCurrentStreak(submittedDates);
+  const grid = buildContributionGrid({ submittedDatesSet: submittedDates, weeks: 12 });
+
+  // Last update time (relative). Prefer createdAt; fallback to update date start-of-day.
+  const lastUpdateMs = (() => {
+    const latest = updates[0];
+    if (!latest) return null;
+    if (typeof latest.createdAt === 'number' && latest.createdAt > 0) return latest.createdAt;
+    const d = new Date(String(latest.date) + 'T00:00:00');
+    return isNaN(d.getTime()) ? null : d.getTime();
+  })();
+  const lastUpdateText = lastUpdateMs ? getRelativeTime(lastUpdateMs) : '—';
+
   employeeModal.innerHTML = `<div class="modal-content employee-detail">
           <span id="closeEmployeeModal" class="close" >&times;</span>
           <div class="cover-banner"></div>
@@ -412,6 +443,52 @@ const showDataInEmployeeDetailModel = ({ id, employeeData }) => {
                 <li><strong>Email:</strong> ${safeEmail}</li>
                 <li><strong>Joining Date:</strong> ${safeJoiningDate}</li>
             </ul>
+            ${(employeeData?.description && String(employeeData.description).trim())
+              ? `<p class="employee-short-desc">${escapeHtml(String(employeeData.description).trim())}</p>`
+              : ``}
+          </div>
+
+          <div class="activity-panel" aria-label="Employee activity">
+            <div class="activity-panel-header">
+              <h2 class="activity-title">Activity</h2>
+              <div class="activity-actions">
+                <span class="activity-status ${isActiveToday ? 'active' : 'missed'}">
+                  <i class="fa-solid ${isActiveToday ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+                  ${isActiveToday ? 'Active Today' : 'Missed Today'}
+                </span>
+                <button type="button" class="activity-view-btn" data-action="view-activity">
+                  <span><i class="fa-solid fa-chart-line"></i></span> View Full Activity
+                </button>
+              </div>
+            </div>
+
+            <div class="activity-stats">
+              <div class="activity-stat-card">
+                <p class="stat-label">Total updates</p>
+                <p class="stat-value">${escapeHtml(String(totalUpdates))}</p>
+              </div>
+              <div class="activity-stat-card">
+                <p class="stat-label">This month</p>
+                <p class="stat-value">${escapeHtml(String(updatesThisMonth))}</p>
+              </div>
+              <div class="activity-stat-card">
+                <p class="stat-label">Missed days</p>
+                <p class="stat-value">${escapeHtml(String(missedDaysThisMonth))}</p>
+              </div>
+              <div class="activity-stat-card">
+                <p class="stat-label">Last update</p>
+                <p class="stat-value">${escapeHtml(String(lastUpdateText))}</p>
+              </div>
+              <div class="activity-stat-card">
+                <p class="stat-label">Current streak</p>
+                <p class="stat-value">${escapeHtml(String(streak))} <span class="stat-suffix">day${streak === 1 ? '' : 's'}</span></p>
+              </div>
+            </div>
+
+            <div class="activity-grid-wrap">
+              <p class="activity-grid-hint">Recent 12 weeks • Highlighted days indicate submitted updates</p>
+              ${grid.html}
+            </div>
           </div>
 
           <div class="btns">
@@ -423,6 +500,16 @@ const showDataInEmployeeDetailModel = ({ id, employeeData }) => {
   // Close modal
   const closeBtn = employeeModal.querySelector('#closeEmployeeModal');
   if (closeBtn) closeBtn.addEventListener('click', () => employeeModal.classList.remove('active'));
+
+  // View full activity
+  const viewBtn = employeeModal.querySelector('[data-action="view-activity"]');
+  if (viewBtn) {
+    viewBtn.addEventListener('click', () => {
+      const theme = document.body?.getAttribute('data-theme') || '';
+      const qp = new URLSearchParams({ id: String(openedEmployeeRowId), theme });
+      window.location.href = `./employee-activity.html?${qp.toString()}`;
+    });
+  }
 
   // DELETE EMPLOYEE FROM UI AND DATABASE (uses opened employee only)
   const deleteBtn = employeeModal.querySelector('.deleteBtn');
@@ -727,6 +814,95 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// ————— Employee Activity helpers (admin) —————
+function getTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function toValidDateStr(val) {
+  if (!val) return null;
+  const s = String(val).trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+
+function normalizeUpdatesArray(employeeData) {
+  const raw = employeeData?.dailyUpdates;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((u) => ({
+      ...u,
+      date: toValidDateStr(u?.date),
+      createdAt: typeof u?.createdAt === 'number' ? u.createdAt : 0,
+      status: u?.status === 'reviewed' ? 'reviewed' : 'submitted',
+      adminComments: Array.isArray(u?.adminComments) ? u.adminComments : [],
+    }))
+    .filter((u) => !!u.date);
+}
+
+function getUniqueSubmittedDates(updates) {
+  const set = new Set();
+  (Array.isArray(updates) ? updates : []).forEach((u) => {
+    if (u?.date) set.add(u.date);
+  });
+  return set;
+}
+
+function addDaysIso(isoDate, days) {
+  const d = new Date(isoDate + 'T00:00:00');
+  if (isNaN(d.getTime())) return isoDate;
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function getMonthStartIso(d = new Date()) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-01`;
+}
+
+function countDaysInclusive(startIso, endIso) {
+  const a = new Date(startIso + 'T00:00:00');
+  const b = new Date(endIso + 'T00:00:00');
+  if (isNaN(a.getTime()) || isNaN(b.getTime())) return 0;
+  const diff = Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+  return diff >= 0 ? diff + 1 : 0;
+}
+
+function computeCurrentStreak(submittedDatesSet) {
+  const today = getTodayStr();
+  if (!submittedDatesSet?.has(today)) return 0;
+  let streak = 0;
+  let cursor = today;
+  while (submittedDatesSet.has(cursor)) {
+    streak++;
+    cursor = addDaysIso(cursor, -1);
+    if (streak > 3660) break;
+  }
+  return streak;
+}
+
+function buildContributionGrid({ submittedDatesSet, weeks = 12 }) {
+  const totalDays = weeks * 7;
+  const endIso = getTodayStr();
+  const startIso = addDaysIso(endIso, -(totalDays - 1));
+  const cells = [];
+
+  for (let i = 0; i < totalDays; i++) {
+    const dayIso = addDaysIso(startIso, i);
+    const isActive = submittedDatesSet.has(dayIso);
+    const isToday = dayIso === endIso;
+    cells.push(
+      `<div class="activity-cell${isActive ? ' active' : ''}${isToday ? ' today' : ''}" title="${escapeHtml(formatUpdateDate(dayIso))}${isActive ? ' — update submitted' : ''}"></div>`
+    );
+  }
+
+  return {
+    startIso,
+    endIso,
+    html: `<div class="activity-grid" aria-label="Recent activity grid">${cells.join('')}</div>`,
+  };
+}
+
 function renderNotSubmittedToday(employeesData) {
   const data = Array.isArray(employeesData) ? employeesData : [];
   const today = new Date().toISOString().slice(0, 10);
@@ -793,8 +969,11 @@ async function loadDailyUpdatesView() {
 }
 
 document.getElementById('applyUpdateFilters')?.addEventListener('click', () => {
-  const dateFilter = document.getElementById('filterUpdateDate')?.value ?? '';
+  const today = new Date().toISOString().slice(0, 10);
+  let dateFilter = document.getElementById('filterUpdateDate')?.value ?? '';
   const employeeFilter = document.getElementById('filterUpdateEmployee')?.value ?? '';
+  // If user didn't choose any filters, keep the default "today only" view
+  if (!dateFilter && !employeeFilter) dateFilter = today;
   let filtered = allUpdatesAggregate.filter((u) => {
     if (dateFilter && u.date !== dateFilter) return false;
     if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
@@ -807,13 +986,16 @@ document.getElementById('applyUpdateFilters')?.addEventListener('click', () => {
 document.getElementById('clearUpdateFilters')?.addEventListener('click', async () => {
   const dateInput = document.getElementById('filterUpdateDate');
   const employeeSelect = document.getElementById('filterUpdateEmployee');
-  if (dateInput) dateInput.value = '';
+  const today = new Date().toISOString().slice(0, 10);
+  // Reset back to the default view: today's updates only
+  if (dateInput) dateInput.value = today;
   if (employeeSelect) employeeSelect.value = '';
   try {
     const data = await getEmployeeDataFromDatabase();
     allUpdatesAggregate = aggregateAllUpdates(data);
     currentUpdatesPage = 1;
-    renderUpdatesList(allUpdatesAggregate);
+    const todayOnly = allUpdatesAggregate.filter((u) => u.date === today);
+    renderUpdatesList(todayOnly);
     renderNotSubmittedToday(data);
   } catch (err) {
     console.error('Clear filters / reload:', err);
