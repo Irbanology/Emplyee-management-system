@@ -57,10 +57,15 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 }
 
-.cover-video video {
+.cover-banner {
   width: 100%;
   height: 200px;
-  object-fit: cover;
+  background: linear-gradient(135deg, #1a1a24 0%, #2d2d3a 50%, #1e1e28 100%);
+}
+
+/* Hide the banner area completely on employee page */
+.profile-container > .cover-banner {
+  display: none;
 }
 
 .profile-section {
@@ -875,7 +880,7 @@ footer .logout:hover {
     max-width: none;
   }
 
-  .profile-container .cover-video video {
+  .profile-container .cover-banner {
     height: 160px;
     border-radius: 14px 14px 0 0;
   }

@@ -40,6 +40,329 @@ body {
   line-height: 1.5;
 }
 
+.theme-toggle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.theme-toggle-btn:active {
+  transform: translateY(0px);
+}
+
+.theme-toggle-btn i {
+  font-size: 14px;
+}
+
+/* ————— Light theme (soft) —————
+   Additive overrides only: dark remains the default. */
+body[data-theme="light"] {
+  /* Softer, warmer light scheme (reduced pure white) */
+  background-color: #e7eaee;
+  color: #1f2937;
+}
+
+body[data-theme="light"] *::-webkit-scrollbar {
+  background-color: #dde2e8;
+}
+
+body[data-theme="light"] *::-webkit-scrollbar-thumb {
+  background-color: #aeb8c6;
+}
+
+body[data-theme="light"] .main-content {
+  background-color: #edf1f6;
+}
+
+body[data-theme="light"] .sidebar,
+body[data-theme="light"] .admin-header,
+body[data-theme="light"] footer,
+body[data-theme="light"] .content .employee-btns,
+body[data-theme="light"] .content .employee-list-container,
+body[data-theme="light"] .content .employee-list-container .employee-list-card-container {
+  background-color: #f6f7f9;
+  color: #1f2937;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+  border: 1px solid rgba(16, 24, 40, 0.06);
+}
+
+body[data-theme="light"] .sidebar-heading,
+body[data-theme="light"] .categories h1,
+body[data-theme="light"] .admin-header h2,
+body[data-theme="light"] footer p {
+  color: #1f2937;
+}
+
+body[data-theme="light"] .role {
+  color: #1f2937;
+}
+
+body[data-theme="light"] .role:hover {
+  background-color: rgba(117, 127, 249, 0.10);
+}
+
+body[data-theme="light"] .role.active {
+  background-color: rgba(117, 127, 249, 0.16);
+  box-shadow: 0 0 0 1px rgba(117, 127, 249, 0.22);
+}
+
+body[data-theme="light"] .sidebar-bottom {
+  border-color: rgba(16, 24, 40, 0.10);
+  background-color: rgba(16, 24, 40, 0.02);
+}
+
+body[data-theme="light"] .employee-card {
+  background-color: #f2f4f7;
+  color: #1f2937;
+  box-shadow: 0 10px 26px rgba(16, 24, 40, 0.08);
+  border: 1px solid rgba(16, 24, 40, 0.06);
+}
+
+body[data-theme="light"] .card-header {
+  background-color: #eaedf3;
+}
+
+body[data-theme="light"] .employee-id-small,
+body[data-theme="light"] .updates-filters .filter-group label,
+body[data-theme="light"] .update-row-id-badge,
+body[data-theme="light"] .update-row-comment-preview,
+body[data-theme="light"] .updates-table th,
+body[data-theme="light"] .updates-status.pending-label,
+body[data-theme="light"] .pending-list,
+body[data-theme="light"] .update-detail-meta .update-date,
+body[data-theme="light"] .update-field p,
+body[data-theme="light"] .update-detail-comments h4 {
+  color: #5b6677;
+}
+
+body[data-theme="light"] .employee-description {
+  color: #475467;
+}
+
+body[data-theme="light"] .employee-preview {
+  color: #667085;
+}
+
+body[data-theme="light"] .updates-filters input,
+body[data-theme="light"] .updates-filters select,
+body[data-theme="light"] input,
+body[data-theme="light"] select,
+body[data-theme="light"] textarea {
+  background-color: #e9edf3;
+  color: #1f2937;
+  border-color: rgba(16, 24, 40, 0.14);
+  box-shadow: none;
+}
+
+body[data-theme="light"] .updates-filters select option {
+  background-color: #f2f4f7;
+  color: #1f2937;
+}
+
+body[data-theme="light"] .updates-table thead {
+  background: rgba(16, 24, 40, 0.03);
+}
+
+body[data-theme="light"] .updates-table tbody tr.update-overview-row:hover {
+  background: rgba(16, 24, 40, 0.02);
+}
+
+body[data-theme="light"] .updates-table td,
+body[data-theme="light"] .updates-table th,
+body[data-theme="light"] .updates-table tbody tr.update-overview-row {
+  border-bottom-color: rgba(16, 24, 40, 0.08);
+}
+
+body[data-theme="light"] .updates-pagination {
+  border-top-color: rgba(16, 24, 40, 0.10);
+}
+
+body[data-theme="light"] .update-row-preview {
+  color: #253044;
+}
+
+body[data-theme="light"] .pagination-btn {
+  color: #5b6677;
+}
+
+body[data-theme="light"] .pagination-btn:hover:not(:disabled) {
+  color: #253044;
+}
+
+body[data-theme="light"] .pagination-btn.active {
+  color: #42DEDF;
+}
+
+body[data-theme="light"] .modal {
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+body[data-theme="light"] .modal-content {
+  background-color: #f2f4f7;
+  color: #1f2937;
+  border: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+body[data-theme="light"] .close {
+  color: #1f2937;
+}
+
+body[data-theme="light"] .update-text-content {
+  background-color: #e9edf3;
+  color: #253044;
+}
+
+body[data-theme="light"] .update-overview-row .add-comment-form {
+  border-top-color: rgba(16, 24, 40, 0.10);
+}
+
+body[data-theme="light"] .update-overview-row .add-comment-form .admin-comment-input {
+  background: #e9edf3;
+  color: #1f2937;
+  border-color: rgba(16, 24, 40, 0.14);
+}
+
+body[data-theme="light"] .updates-filters .btn-secondary {
+  background-color: rgba(16, 24, 40, 0.05);
+  color: #475467;
+}
+
+body[data-theme="light"] .updates-filters .btn-secondary:hover {
+  background-color: rgba(16, 24, 40, 0.08);
+}
+
+body[data-theme="light"] .update-detail-meta {
+  border-bottom-color: rgba(16, 24, 40, 0.12);
+}
+
+body[data-theme="light"] .comment-item {
+  color: #253044;
+  border-bottom-color: rgba(16, 24, 40, 0.12);
+}
+
+body[data-theme="light"] .no-comments {
+  color: #98a2b3;
+}
+
+body[data-theme="light"] .theme-toggle-btn {
+  border-color: rgba(16, 24, 40, 0.14);
+  background: rgba(16, 24, 40, 0.04);
+  color: #1f2937;
+}
+
+body[data-theme="light"] .theme-toggle-btn:hover {
+  background: rgba(16, 24, 40, 0.07);
+}
+
+/* Softer focus treatment for light theme */
+body[data-theme="light"] input:focus,
+body[data-theme="light"] select:focus,
+body[data-theme="light"] textarea:focus {
+  border-color: rgba(66, 222, 223, 0.55);
+  box-shadow: 0 0 0 3px rgba(66, 222, 223, 0.16);
+}
+
+/* Buttons: avoid harsh highlights in light theme */
+body[data-theme="light"] .logout-btn {
+  box-shadow: 0 10px 22px rgba(16, 24, 40, 0.10);
+}
+
+body[data-theme="light"] .btn-green {
+  box-shadow: 0 10px 22px rgba(16, 24, 40, 0.10);
+}
+
+body[data-theme="light"] .btn-green:hover,
+body[data-theme="light"] .modal button:hover,
+body[data-theme="light"] .employee-btns button:hover {
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.14);
+}
+
+/* Subtle pill backgrounds (employee cards date chip) */
+body[data-theme="light"] .date-div p {
+  background-color: rgba(16, 24, 40, 0.06);
+  color: #475467;
+}
+
+body[data-theme="light"] .time-badge {
+  background: #e1e6ee;
+  color: #475467;
+  border: 1px solid rgba(16, 24, 40, 0.10);
+}
+
+/* Employee Details modal: ID/Department info boxes */
+.employee-detail .employee-info {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.employee-detail .employee-info .info-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 12px;
+}
+
+/* Dark version styling (default theme) */
+.employee-detail .employee-info .info-box.dark {
+  background: #1e1e1e;
+  border: 1px solid #2c2c2c;
+}
+
+.employee-detail .employee-info .label {
+  color: #d1d5db;
+  font-weight: 500;
+}
+
+.employee-detail .employee-info .badge {
+  background: #374151;
+  color: #f9fafb;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* Light theme styling */
+body[data-theme="light"] .employee-detail .employee-info .info-box.dark {
+  background: #e9edf3;
+  border: 1px solid rgba(16, 24, 40, 0.10);
+}
+
+body[data-theme="light"] .employee-detail .employee-info .label {
+  color: #475467;
+}
+
+body[data-theme="light"] .employee-detail .employee-info .badge {
+  background-color: rgba(66, 222, 223, 0.14);
+  color: #1f2937;
+  border: 1px solid rgba(66, 222, 223, 0.20);
+}
+
+/* Employee Personal Information labels (Email / Joining Date) */
+body[data-theme="light"] .employee-detail .details strong {
+  background-color: rgba(16, 24, 40, 0.06);
+  color: #475467;
+  border: 1px solid rgba(16, 24, 40, 0.10);
+  padding: 4px 8px;
+  border-radius: 10px;
+}
 .container {
   display: flex;
   width: 100%;
@@ -396,6 +719,7 @@ body {
   padding: 20px;
   text-align: center;
   line-height: 1.5;
+  padding-bottom: 52px; /* reserve space for bottom-right time badge */
 }
 
 .employee-name {
@@ -420,39 +744,26 @@ body {
   margin: 8px auto 10px;
 }
 
-.employee-description {
+.employee-preview {
+  margin-top: 6px;
+  color: #9ca3af;
+  font-size: 14px;
+  line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 8px;
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: #c7c7c7;
-  line-height: 1.5;
 }
 
-.date-div {
+.time-badge {
   position: absolute;
-  width: 100%;
-  height: 20px;
-  margin-top: 11px;
-  display: flex;
-  align-items: end;
-  justify-content: end;
-  padding-right: 16px;
-  padding-right: 15px;
-  bottom: 8px;
-  right: 0px;
-}
-
-.date-div p {
-  font-size: 0.9em;
-  background-color: #363639;
-  padding: 0px 15px;
-  border-radius: 15px;
+  bottom: 10px;
+  right: 12px;
+  background: #2d2d2d;
+  color: #d1d5db;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
 }
 
 footer {
@@ -1090,18 +1401,28 @@ input:read-only {
 }
 
 
-/* Cover Photo */
-.cover-video video {
+/* Cover banner (employee modal) */
+.cover-banner {
   width: 100%;
   height: 180px;
-  object-fit: cover;
+  background: linear-gradient(135deg, #1a1a24 0%, #2d2d3a 50%, #1e1e28 100%);
   border-radius: 10px 10px 0 0;
+}
+
+/* Don't show the cover/banner area in the employee detail modal */
+.employee-detail .cover-banner {
+  display: none;
 }
 
 /* Profile Section */
 .profile-section {
   text-align: center;
   margin-top: -70px;
+}
+
+/* If banner is hidden, avoid pulling profile upward */
+.employee-detail .profile-section {
+  margin-top: 0;
 }
 
 .profile-pic-modal {

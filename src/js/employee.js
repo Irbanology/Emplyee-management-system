@@ -3,6 +3,21 @@ import { getCurrentUser, getEmployeeDataFromDatabase, editEmployeeFromDatabase, 
 import { createToastForNotification, formatUpdateDate, formatUpdateDateShort, getErrorMessage, hideLoading, hideSpinner, showSpinner, showLoading } from "./utils.js";
 import { validateDailyUpdateForm } from "./validate.js";
 
+// Normalize legacy department values for display consistency
+const LEGACY_DEPARTMENT_MAP = {
+  'Android Development': 'Mobile Development',
+  'Mobile Dev': 'Mobile Development',
+  'Human resources': 'Human Resources',
+  'HR': 'Human Resources',
+};
+
+function normalizeDepartmentValue(raw) {
+  if (raw == null) return '—';
+  const v = String(raw).trim();
+  if (!v) return '—';
+  return LEGACY_DEPARTMENT_MAP[v] || v;
+}
+
 
 // GET ELEMENT...
 const editProfileBtn = document.querySelector('.edit-profile-btn');
@@ -140,7 +155,7 @@ const showCurrentDataInPage = (employeeData) => {
   const nameEl = document.querySelector('.employee-name');
   if (nameEl) nameEl.textContent = data?.fullName ?? '—';
   const deptEl = document.querySelector('.IT');
-  if (deptEl) deptEl.textContent = data?.department ?? '—';
+  if (deptEl) deptEl.textContent = normalizeDepartmentValue(data?.department);
   const fullNameInput = document.querySelector('#fullname');
   if (fullNameInput) {
     fullNameInput.value = data?.fullName ?? '';

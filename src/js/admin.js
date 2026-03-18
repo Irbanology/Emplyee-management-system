@@ -20,6 +20,30 @@ const openModal = document.getElementById("openModal");
 const closeModal = document.getElementById("closeModal");
 const form = document.getElementById("employeeForm");
 const logoutBtn = document.querySelector('.logout-btn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+// Department normalization (keeps filters + display consistent with legacy saved values)
+const ALLOWED_DEPARTMENTS = [
+  'Mobile Development',
+  'Software Engineering',
+  'Graphics Designing',
+  'Marketing',
+  'Human Resources',
+];
+
+const LEGACY_DEPARTMENT_MAP = {
+  'Android Development': 'Mobile Development',
+  'Mobile Dev': 'Mobile Development',
+  'Human resources': 'Human Resources',
+  'HR': 'Human Resources',
+};
+
+function normalizeDepartmentValue(raw) {
+  if (raw == null) return '';
+  const v = String(raw).trim();
+  if (!v) return '';
+  return LEGACY_DEPARTMENT_MAP[v] || v;
+}
 
 
 // CHECK ADMIN AUTHENTICATED OR NOT...
@@ -92,12 +116,16 @@ roles.forEach(role => {
 
     const roleEl = e.target.closest('.role');
     const department = roleEl?.getAttribute('data-department') ?? roleEl?.textContent?.trim() ?? '';
+    const departmentNormalized = normalizeDepartmentValue(department);
     try {
       const employeesdata = await getEmployeeDataFromDatabase();
       if (department === '' || department === 'All Employees') {
         showEmployeeCard(employeesdata);
       } else {
-        const departmentEmployeeData = employeesdata.filter((el) => el.employeeData?.department === department);
+        const departmentEmployeeData = employeesdata.filter((el) => {
+          const empDept = normalizeDepartmentValue(el.employeeData?.department);
+          return empDept === departmentNormalized;
+        });
         showEmployeeCard(departmentEmployeeData);
       }
     } catch (err) {
@@ -108,9 +136,42 @@ roles.forEach(role => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   const firstRole = document.querySelector('.role');
   if (firstRole) firstRole.click();
 });
+
+// ————— Theme (admin) —————
+const THEME_STORAGE_KEY = 'ems_admin_theme';
+
+function applyTheme(theme) {
+  const t = theme === 'light' ? 'light' : 'dark';
+  document.body?.setAttribute('data-theme', t);
+
+  // Keep icon consistent with current theme
+  if (themeToggleBtn) {
+    const icon = themeToggleBtn.querySelector('i');
+    if (icon) {
+      icon.className = t === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    }
+    themeToggleBtn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+  }
+}
+
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_STORAGE_KEY); } catch (_) {}
+  applyTheme(saved || 'dark'); // dark is default
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      const current = document.body?.getAttribute('data-theme') || 'dark';
+      const next = current === 'light' ? 'dark' : 'light';
+      applyTheme(next);
+      try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (_) {}
+    });
+  }
+}
 
 
 // Open modal
@@ -266,8 +327,9 @@ const showEmployeeCard = (employeeData) => {
     // Escape user/DB content to prevent XSS
     const safeName = escapeHtml(employeeData.fullName);
     const safeId = escapeHtml(empId);
-    const safeDept = escapeHtml(employeeData.department);
-    const safeDesc = escapeHtml(employeeData.description);
+    const safeDept = escapeHtml(normalizeDepartmentValue(employeeData.department));
+    const rawPreview = (employeeData.description || '').trim() || `Department: ${normalizeDepartmentValue(employeeData.department) || '—'}`;
+    const safePreview = escapeHtml(rawPreview);
     const imgSrc = !employeeData.profilePicture ? './assets/images/human-img.png' : `${supabaseUrl}/storage/v1/object/public/${employeeData.profilePicture}`;
     employeeContainer.innerHTML += `<div class="employee-card" data-employeeid="${id}">
                 <div class="card-header">
@@ -277,10 +339,8 @@ const showEmployeeCard = (employeeData) => {
                   <h2 class="employee-name">${safeName}</h2>
                   <p class="employee-id-small">ID: ${safeId}</p>
                   <p class="employee-department">Department: ${safeDept}</p>
-                  <p class="employee-description">${safeDesc}</p>
-                  <div class="date-div">
-                    <p>${getRelativeTime(employeeData.createdAt)}</p>
-                  </div>
+                  <p class="employee-preview">${safePreview}</p>
+                  <span class="time-badge">${getRelativeTime(employeeData.createdAt)}</span>
                 </div>
     </div>`;
   });
@@ -324,20 +384,26 @@ const showDataInEmployeeDetailModel = ({ id, employeeData }) => {
 
   const safeFullName = escapeHtml(employeeData?.fullName);
   const safeEmployeeId = escapeHtml(employeeData?.employeeId || '—');
-  const safeDepartment = escapeHtml(employeeData?.department);
+  const safeDepartment = escapeHtml(normalizeDepartmentValue(employeeData?.department));
   const safeEmail = escapeHtml(employeeData?.email);
   const safeJoiningDate = escapeHtml(employeeData?.joiningDate);
   const modalImgSrc = !employeeData?.profilePicture ? './assets/images/human-img.png' : `${supabaseUrl}/storage/v1/object/public/${employeeData.profilePicture}`;
   employeeModal.innerHTML = `<div class="modal-content employee-detail">
           <span id="closeEmployeeModal" class="close" >&times;</span>
-          <div class="cover-video">
-            <video src="./assets/videos/cover-video.mp4" muted autoplay loop alt='cover video'></video>
-          </div>
+          <div class="cover-banner"></div>
           <div class="profile-section">
             <img src="${modalImgSrc}" alt="Profile Picture" class="profile-pic-modal">
             <h1>${safeFullName}</h1>
-            <p>Employee ID: <span>${safeEmployeeId}</span></p>
-            <p>Department  <span>${safeDepartment}</span></p>
+            <div class="employee-info">
+              <div class="info-box dark">
+                <span class="label">Employee ID:</span>
+                <span class="badge">${safeEmployeeId}</span>
+              </div>
+              <div class="info-box dark">
+                <span class="label">Department:</span>
+                <span class="badge">${safeDepartment}</span>
+              </div>
+            </div>
           </div>
 
           <div class="details">
@@ -412,7 +478,10 @@ const showDataInEmployeeDetailModel = ({ id, employeeData }) => {
     const joiningEl = document.querySelector('#joiningDate');
     if (joiningEl) joiningEl.value = employeeData?.joiningDate ?? '';
     const deptEl = document.querySelector('#department');
-    if (deptEl) deptEl.value = employeeData?.department ?? '';
+    if (deptEl) {
+      const normalized = normalizeDepartmentValue(employeeData?.department ?? '');
+      deptEl.value = ALLOWED_DEPARTMENTS.includes(normalized) ? normalized : '';
+    }
     const descEl = document.querySelector('#description');
     if (descEl) descEl.value = employeeData?.description ?? '';
 
@@ -495,10 +564,27 @@ function getUpdatePreviewText(u) {
   return escapeHtml(getUpdatePreviewRaw(u));
 }
 
-/** workDone only, 1–2 lines (ellipsis via CSS), for table Update column */
-function getWorkDonePreview(u) {
-  const raw = (u.workDone != null ? String(u.workDone).trim() : '') || '—';
-  return escapeHtml(raw);
+function cleanPreviewText(raw) {
+  if (raw == null) return '—';
+  const str = String(raw)
+    .replace(/\r\n/g, '\n')
+    .replace(/\t/g, ' ')
+    .trim();
+  if (!str) return '—';
+  // Keep it readable in a single compact preview (CSS still clamps lines)
+  const oneLine = str.replace(/\s+/g, ' ').trim();
+  if (oneLine.length <= 150) return oneLine;
+  const cut = oneLine.slice(0, 150);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trimEnd() + '...';
+}
+
+/** Update preview (prefer updateText; fallback to workDone) for table Update column */
+function getUpdatePreviewForTable(u) {
+  const raw = (u.updateText != null && String(u.updateText).trim() !== '')
+    ? String(u.updateText)
+    : (u.workDone != null ? String(u.workDone) : '');
+  return escapeHtml(cleanPreviewText(raw));
 }
 
 function renderUpdatesList(updates) {
@@ -530,7 +616,7 @@ function renderUpdatesList(updates) {
     const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
     const latestComment = comments.length ? (comments[comments.length - 1].commentText || '') : '';
     const nameColor = getNameColor(u.employeeName);
-    const workDoneTitle = (u.workDone != null ? String(u.workDone).trim() : '') || '—';
+    const previewTitleRaw = cleanPreviewText(getUpdatePreviewRaw(u));
 
     const row = document.createElement('tr');
     row.className = 'update-overview-row';
@@ -543,7 +629,7 @@ function renderUpdatesList(updates) {
         <span class="update-row-id-badge">[${escapeHtml(u.employeeId)}]</span>
       </td>
       <td class="updates-col updates-col-update">
-        <p class="update-row-preview" title="${escapeHtml(workDoneTitle)}">${getWorkDonePreview(u)}</p>
+        <p class="update-row-preview" title="${escapeHtml(previewTitleRaw)}">${getUpdatePreviewForTable(u)}</p>
         <button type="button" class="link-view" data-action="view-full">View</button>
       </td>
       <td class="updates-col updates-col-comments">
@@ -667,7 +753,6 @@ async function loadDailyUpdatesView() {
     const data = await getEmployeeDataFromDatabase();
     allUpdatesAggregate = aggregateAllUpdates(data);
     currentUpdatesPage = 1;
-    renderUpdatesList(allUpdatesAggregate);
 
     const filterEmployee = document.getElementById('filterUpdateEmployee');
     if (filterEmployee) {
@@ -679,6 +764,20 @@ async function loadDailyUpdatesView() {
       }
     });
     }
+
+    // Default: show only today's updates (safe: users can change date/employee then Apply)
+    const dateInput = document.getElementById('filterUpdateDate');
+    const today = new Date().toISOString().slice(0, 10);
+    if (dateInput && !dateInput.value) dateInput.value = today;
+
+    const dateFilter = dateInput?.value ?? '';
+    const employeeFilter = document.getElementById('filterUpdateEmployee')?.value ?? '';
+    const initialFiltered = allUpdatesAggregate.filter((u) => {
+      if (dateFilter && u.date !== dateFilter) return false;
+      if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
+      return true;
+    });
+    renderUpdatesList(initialFiltered);
 
     renderNotSubmittedToday(data);
   } catch (err) {

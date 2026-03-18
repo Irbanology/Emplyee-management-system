@@ -105,7 +105,6 @@ function showLoading(text) {
     const loadingWrapper = document.createElement('div');
     loadingWrapper.classList.add('loading-wrapper');
     loadingWrapper.innerHTML = `<div class="loading-animation" id="loadingAnimation">
-      <video src="./assets/videos/loading-video.mp4" muted autoplay loop></video>
       <div class="loading-bar"></div>
       <p>${safeText}</p>
     </div>`;

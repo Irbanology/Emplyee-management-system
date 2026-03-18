@@ -1,6 +1,28 @@
 import { getEmployeeDataFromDatabase } from "./db.js";
 import { createToastForNotification, getErrorMessage } from "./utils.js";
 
+const ALLOWED_DEPARTMENTS = [
+  'Mobile Development',
+  'Software Engineering',
+  'Graphics Designing',
+  'Marketing',
+  'Human Resources',
+];
+
+const LEGACY_DEPARTMENT_MAP = {
+  'Android Development': 'Mobile Development',
+  'Mobile Dev': 'Mobile Development',
+  'Human resources': 'Human Resources',
+  'HR': 'Human Resources',
+};
+
+function normalizeDepartment(raw) {
+  if (raw == null) return '';
+  const v = String(raw).trim();
+  if (!v) return '';
+  return LEGACY_DEPARTMENT_MAP[v] || v;
+}
+
 const validateForm = async function (form, editId) {
   if (!form?.elements) return false;
   try {
@@ -17,6 +39,20 @@ const validateForm = async function (form, editId) {
     if (!element.value.trim()) {
       isValid = false;
       createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', `${element.name} ${element.name === 'department' ? 'selection' : '' } is required.`);
+    }
+
+    // Department must be one of the predefined values
+    if (element.name === 'department' && element.value.trim()) {
+      const normalized = normalizeDepartment(element.value);
+      if (!ALLOWED_DEPARTMENTS.includes(normalized)) {
+        isValid = false;
+        createToastForNotification(
+          'error',
+          'fa-solid fa-circle-exclamation',
+          'Error',
+          `Invalid department. Please choose one of: ${ALLOWED_DEPARTMENTS.join(', ')}.`
+        );
+      }
     }
 
     // Additional validations (e.g., email format)
@@ -151,6 +187,9 @@ function saveFormData(form) {
   formData.forEach((value, key) => {
     employeeData[key] = value.trim();
   });
+
+  // Normalize department to standardized values
+  employeeData.department = normalizeDepartment(employeeData.department);
 
   // Add additional processing if needed
   employeeData.createdAt = new Date().getTime();

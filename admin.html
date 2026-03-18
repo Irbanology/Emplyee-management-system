@@ -35,9 +35,9 @@
             <li class="role active" data-section="employees">All Employees</li>
             <li class="role" data-section="employees" data-department="Marketing">Marketing</li>
             <li class="role" data-section="employees" data-department="Graphics Designing">Graphics</li>
-            <li class="role" data-section="employees" data-department="Android Development">Mobile Dev</li>
+            <li class="role" data-section="employees" data-department="Mobile Development">Mobile Dev</li>
             <li class="role" data-section="employees" data-department="Software Engineering">Software Eng.</li>
-            <li class="role" data-section="employees" data-department="Human resources">HR</li>
+            <li class="role" data-section="employees" data-department="Human Resources">HR</li>
           </ul>
         </div>
         <div class="sidebar-bottom">
@@ -52,6 +52,9 @@
       <header class="admin-header">
         <h2>Welcome to the Admin Panel</h2>
         <div class="logout-title">
+          <button type="button" class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle theme" title="Toggle theme">
+            <i class="fa-solid fa-moon"></i>
+          </button>
           <button class="logout-btn"><span><i class="fa-solid fa-right-from-bracket"></i></span> Sign Out</button>
           <span class="toggle-btn" id="toggleSidebar" data-toggle>&#9776;</span>
         </div>
@@ -147,11 +150,11 @@
               <label for="department">Department </label>
               <select id="department" name="department">
                 <option value="">Select Department</option>
-                <option value="Android Development">Mobile Development</option>
+                <option value="Mobile Development">Mobile Development</option>
                 <option value="Software Engineering">Software Engineering</option>
                 <option value="Graphics Designing">Graphics Designing</option>
                 <option value="Marketing">Marketing</option>
-                <option value="Human resources">Human resources</option>
+                <option value="Human Resources">Human Resources</option>
               </select>
             </div>
             <div class="form-group">
