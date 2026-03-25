@@ -16,6 +16,16 @@
   border-radius: 6px;
 }
 
+/* ---------- Shared layout tokens (admin pages + admin modals) ---------- */
+:root {
+  --ems-container-pad: 24px;
+  --ems-card-radius: 12px;
+  --ems-modal-radius: 16px;
+  --ems-section-gap: 20px; /* target: 16–24px */
+  --ems-section-gap-sm: 16px;
+  --ems-control-gap: 12px;
+}
+
 html {
   width: 100%;
   height: 100%;
@@ -509,7 +519,7 @@ body[data-theme="light"] .employee-detail .details strong {
 .main-content {
   flex: 1;
   background-color: #171717;
-  padding: 24px;
+  padding: var(--ems-container-pad);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -539,6 +549,7 @@ body[data-theme="light"] .employee-detail .details strong {
     align-items: center;
     justify-content: center;
     gap: 10px;
+    min-width: 0;
 }
 
 .toggle-btn {
@@ -575,6 +586,9 @@ body[data-theme="light"] .employee-detail .details strong {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: normal;
+  text-align: center;
+  min-width: 120px;
 }
 
 .logout-btn:hover {
@@ -1296,6 +1310,10 @@ footer p {
   align-items: center;
   animation: fadeIn 0.3s ease-in-out;
   z-index: 11;
+  padding: 20px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .modal.active {
@@ -1315,6 +1333,15 @@ footer p {
   position: relative;
   z-index: 11;
   box-sizing: border-box;
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+.modal-content > * {
+  max-width: 100%;
 }
 
 .employee-detail {
@@ -1328,6 +1355,19 @@ footer p {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--ems-section-gap);
+  padding: 24px;
+}
+
+/* Normalize vertical flow within employee detail modal sections */
+.employee-detail .profile-section,
+.employee-detail .details,
+.employee-detail .activity-panel,
+.employee-detail .btns {
+  width: 100%;
 }
 
 .close {
@@ -1528,15 +1568,20 @@ body[data-theme="light"] .employee-short-desc {
 .btns {
   width: 100%;
   display: flex;
-  align-items: end;
-  justify-content: end;
-  gap: 30px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ems-control-gap);
+  margin-top: auto; /* push actions to bottom when space allows */
+  padding-top: var(--ems-section-gap-sm);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .btns button {
   font-weight: 600;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  min-height: 44px;
+  padding: 10px 16px;
 }
 
 .btns button:first-child:hover {

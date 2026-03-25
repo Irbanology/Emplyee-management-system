@@ -31,6 +31,13 @@ body {
   overflow-x: hidden;
 }
 
+/* ---------- Shared layout tokens (employee page + modals) ---------- */
+:root {
+  --ems-page-max: 1200px;
+  --ems-section-gap: 20px; /* target: 16–24px */
+  --ems-section-gap-sm: 16px;
+}
+
 /* Dashboard wrapper: only updates feed scrolls */
 .employee-dashboard {
   flex: 1;
@@ -41,7 +48,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px 0;
-  gap: 20px;
+  gap: var(--ems-section-gap);
 }
 
 /* ----- 1. Profile Header (Top) ----- */
@@ -415,6 +422,12 @@ body {
   transition: transform 0.2s ease-out, opacity 0.2s ease-out;
   will-change: transform, opacity;
   contain: layout paint;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--ems-section-gap-sm);
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
 .update-detail-modal.active .update-detail-content {
@@ -649,6 +662,9 @@ footer .logout:hover {
   align-items: center;
   z-index: 500;
   padding: 20px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .modal.active {
@@ -666,10 +682,19 @@ footer .logout:hover {
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
   text-align: center;
   animation: modalScaleIn 0.25s ease-out;
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--ems-section-gap-sm);
 }
 
 .modal-content h2 {
-  margin-bottom: 20px;
+  margin-bottom: 0;
   font-size: 1.2rem;
   font-weight: 700;
   color: #fff;
