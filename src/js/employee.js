@@ -1,6 +1,6 @@
 // IMPORT ALL MODULES...
-import { getCurrentUser, getEmployeeDataFromDatabase, editEmployeeFromDatabase, updateProfileData, supabaseUrl, logout, checkUserLoginOrNot } from "./db.js";
-import { createToastForNotification, formatUpdateDate, formatUpdateDateShort, getErrorMessage, hideLoading, hideSpinner, showSpinner, showLoading } from "./utils.js";
+import { getCurrentUser, getEmployeeDataFromDatabase, editEmployeeFromDatabase, updateProfileData, supabaseUrl, logout, checkUserLoginOrNot, editEmployeeUpdateIfSubmitted } from "./db.js";
+import { createToastForNotification, formatUpdateDate, formatUpdateDateShort, getErrorMessage, hideSpinner, showSpinner } from "./utils.js";
 import { validateDailyUpdateForm } from "./validate.js";
 
 // Normalize legacy department values for display consistency
@@ -55,28 +55,10 @@ function getStatusMeta(status) {
   return { label: 'Submitted', className: 'submitted' };
 }
 
-
-let initialLoadingTimer = null;
-let initialLoadingShown = false;
-
-function beginInitialLoad() {
-  // Show loader only if fetch takes noticeable time.
-  initialLoadingTimer = setTimeout(() => {
-    showLoading("Loading Profile...");
-    initialLoadingShown = true;
-  }, 350);
+function isUpdateEditableByStatus(status) {
+  return normalizeUpdateStatus(status) === 'submitted';
 }
 
-function endInitialLoad() {
-  if (initialLoadingTimer) {
-    clearTimeout(initialLoadingTimer);
-    initialLoadingTimer = null;
-  }
-  if (initialLoadingShown) {
-    hideLoading();
-    initialLoadingShown = false;
-  }
-}
 
 
 if (logoutBtn) {
@@ -129,7 +111,6 @@ function ensureDailyUpdates(empRecord) {
 // SHOW USER DATA OVER THE EMPLOYEE PAGE...
 let currentEmployeeDataRef = null;
 const showUserData = async () => {
-  beginInitialLoad();
   try {
     const session = await checkUserLoginOrNot();
     if (!session) {
@@ -157,8 +138,6 @@ const showUserData = async () => {
   } catch (err) {
     console.error('showUserData:', err);
     createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Failed to load profile.'));
-  } finally {
-    endInitialLoad();
   }
 };
 
@@ -304,6 +283,8 @@ function openUpdateDetailModal(updateId) {
 
   const titleText = `Update — ${formatUpdateDate(u.date)}`;
   const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
+  const statusMeta = getStatusMeta(u.status);
+  const isEditable = isUpdateEditableByStatus(u.status);
   const commentsHtml = comments.length
     ? comments.map((c) => `<div class="update-detail-comment"><span class="update-detail-comment-text">${escapeHtmlFast(c.commentText || '')}</span></div>`).join('')
     : '<p class="update-detail-no-comments">No admin comments yet.</p>';
@@ -312,8 +293,24 @@ function openUpdateDetailModal(updateId) {
   const contentHtml = hasUpdateText
     ? `
     <div class="update-detail-section">
+      <p class="update-detail-label">Status</p>
+      <div class="update-detail-status-wrap">
+        <span class="status ${statusMeta.className}">${escapeHtmlFast(statusMeta.label)}</span>
+      </div>
+    </div>
+    <div class="update-detail-section">
       <p class="update-detail-label">Today's Update</p>
-      <div class="update-detail-text">${escapeHtmlFast(u.updateText || '—')}</div>
+      <div class="update-detail-text" data-update-text-display>${escapeHtmlFast(u.updateText || '—')}</div>
+    </div>
+    <div class="update-detail-section update-detail-edit-area">
+      ${isEditable
+        ? `
+          <button type="button" class="update-detail-edit-btn" data-action="start-edit" data-update-id="${escapeHtmlFast(String(u.updateId))}">
+            <span><i class="fa-solid fa-pen-to-square"></i></span> Edit
+          </button>
+        `
+        : `<p class="update-detail-lock-note">This update can no longer be edited after it has been reviewed.</p>`
+      }
     </div>
     <div class="update-detail-section update-detail-admin">
       <p class="update-detail-label">Admin feedback</p>
@@ -321,6 +318,12 @@ function openUpdateDetailModal(updateId) {
     </div>
   `
     : `
+    <div class="update-detail-section">
+      <p class="update-detail-label">Status</p>
+      <div class="update-detail-status-wrap">
+        <span class="status ${statusMeta.className}">${escapeHtmlFast(statusMeta.label)}</span>
+      </div>
+    </div>
     <div class="update-detail-section">
       <p class="update-detail-label">Work Done</p>
       <div class="update-detail-text">${escapeHtmlFast(u.workDone || '—')}</div>
@@ -342,6 +345,7 @@ function openUpdateDetailModal(updateId) {
   requestAnimationFrame(() => {
     updateDetailTitleEl.textContent = titleText;
     updateDetailBodyEl.innerHTML = contentHtml;
+    updateDetailBodyEl.setAttribute('data-update-id', String(u.updateId));
     updateDetailModalEl.classList.add('active');
     updateDetailModalEl.setAttribute('aria-hidden', 'false');
   });
@@ -370,6 +374,80 @@ async function completeUpdateIfAcknowledged(updateId) {
   await editEmployeeFromDatabase(record.employeeData, record.id);
   currentEmployeeDataRef = [{ ...record, employeeData: { ...record.employeeData } }];
   renderMyUpdates(currentEmployeeDataRef);
+}
+
+function renderUpdateEditForm(updateId, currentText) {
+  if (!updateDetailBodyEl) return;
+  const editArea = updateDetailBodyEl.querySelector('.update-detail-edit-area');
+  if (!editArea) return;
+  editArea.innerHTML = `
+    <div class="update-detail-edit-form">
+      <label class="update-detail-label" for="updateEditTextarea">Edit update</label>
+      <textarea id="updateEditTextarea" class="update-detail-edit-textarea" rows="5">${escapeHtmlFast(currentText || '')}</textarea>
+      <div class="update-detail-edit-actions">
+        <button type="button" class="update-detail-edit-save" data-action="save-edit" data-update-id="${escapeHtmlFast(String(updateId))}">Save</button>
+        <button type="button" class="update-detail-edit-cancel" data-action="cancel-edit" data-update-id="${escapeHtmlFast(String(updateId))}">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
+async function saveUpdateEdit(updateId) {
+  if (!currentEmployeeDataRef?.length) return;
+  const record = currentEmployeeDataRef[0];
+  const textarea = updateDetailBodyEl?.querySelector('#updateEditTextarea');
+  const nextText = textarea?.value?.trim() ?? '';
+  if (!nextText) {
+    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Update text cannot be empty.');
+    return;
+  }
+
+  showSpinner();
+  try {
+    await editEmployeeUpdateIfSubmitted({
+      tableRowId: record.id,
+      updateId,
+      updateText: nextText,
+    });
+    await showUserData();
+    openUpdateDetailModal(updateId);
+    createToastForNotification('success', 'fa-solid fa-circle-check', 'Success', 'Update edited successfully.');
+  } catch (err) {
+    // If status changed on admin side, refresh and show lock message.
+    await showUserData();
+    openUpdateDetailModal(updateId);
+    createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'This update can no longer be edited.'));
+  } finally {
+    hideSpinner();
+  }
+}
+
+function handleUpdateDetailActions(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  const actionEl = target.closest('[data-action]');
+  if (!actionEl) return;
+  const action = actionEl.getAttribute('data-action');
+  const updateId = actionEl.getAttribute('data-update-id') || updateDetailBodyEl?.getAttribute('data-update-id');
+  if (!updateId) return;
+
+  if (action === 'start-edit') {
+    const display = updateDetailBodyEl?.querySelector('[data-update-text-display]');
+    const currentText = display?.textContent ?? '';
+    renderUpdateEditForm(updateId, currentText);
+    const textarea = updateDetailBodyEl?.querySelector('#updateEditTextarea');
+    if (textarea) textarea.focus();
+    return;
+  }
+
+  if (action === 'cancel-edit') {
+    openUpdateDetailModal(updateId);
+    return;
+  }
+
+  if (action === 'save-edit') {
+    saveUpdateEdit(updateId).catch(() => {});
+  }
 }
 
 function closeUpdateDetailModal() {
@@ -401,6 +479,7 @@ if (myUpdatesListEl) {
 
 document.getElementById('updateDetailClose')?.addEventListener('click', closeUpdateDetailModal);
 document.querySelector('.update-detail-backdrop')?.addEventListener('click', closeUpdateDetailModal);
+updateDetailBodyEl?.addEventListener('click', handleUpdateDetailActions);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeUpdateDetailModal();
 }, { passive: true });
