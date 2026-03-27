@@ -1138,7 +1138,12 @@ footer p {
   font-weight: 600;
 }
 
-.update-status-badge.reviewed {
+.update-status-badge.received {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.update-status-badge.replied {
   background-color: rgba(209, 250, 229, 0.2);
   color: #34d399;
 }
@@ -1146,6 +1151,11 @@ footer p {
 .update-status-badge.submitted {
   background-color: rgba(254, 226, 226, 0.2);
   color: #f87171;
+}
+
+.update-status-badge.completed {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
 }
 
 .update-detail-fields {

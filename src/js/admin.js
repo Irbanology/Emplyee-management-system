@@ -583,6 +583,28 @@ let allUpdatesAggregate = [];
 let currentFilteredUpdates = [];
 let currentUpdatesPage = 1;
 
+const UPDATE_STATUS_ORDER = {
+  submitted: 0,
+  received: 1,
+  replied: 2,
+  completed: 3,
+};
+
+function normalizeUpdateStatus(rawStatus, hasComments = false) {
+  const raw = String(rawStatus || '').trim().toLowerCase();
+  if (raw in UPDATE_STATUS_ORDER) return raw;
+  if (raw === 'reviewed') return hasComments ? 'replied' : 'received';
+  return 'submitted';
+}
+
+function getStatusMeta(status) {
+  const normalized = normalizeUpdateStatus(status);
+  if (normalized === 'received') return { label: 'Received', className: 'received' };
+  if (normalized === 'replied') return { label: 'Replied', className: 'replied' };
+  if (normalized === 'completed') return { label: 'Completed', className: 'completed' };
+  return { label: 'Submitted', className: 'submitted' };
+}
+
 function aggregateAllUpdates(employeesData) {
   const list = [];
   const data = Array.isArray(employeesData) ? employeesData : [];
@@ -594,9 +616,9 @@ function aggregateAllUpdates(employeesData) {
     updates.forEach((u) => {
       const normalizedUpdate = {
         ...u,
-        status: u.status === 'reviewed' ? 'reviewed' : 'submitted',
         adminComments: Array.isArray(u.adminComments) ? u.adminComments : [],
       };
+      normalizedUpdate.status = normalizeUpdateStatus(normalizedUpdate.status, normalizedUpdate.adminComments.length > 0);
       list.push({
         ...normalizedUpdate,
         employeeName: emp.fullName,
@@ -833,10 +855,42 @@ function normalizeUpdatesArray(employeeData) {
       ...u,
       date: toValidDateStr(u?.date),
       createdAt: typeof u?.createdAt === 'number' ? u.createdAt : 0,
-      status: u?.status === 'reviewed' ? 'reviewed' : 'submitted',
       adminComments: Array.isArray(u?.adminComments) ? u.adminComments : [],
     }))
+    .map((u) => ({
+      ...u,
+      status: normalizeUpdateStatus(u.status, u.adminComments.length > 0),
+    }))
     .filter((u) => !!u.date);
+}
+
+async function setUpdateStatusForwardOnly(dbId, updateId, targetStatus) {
+  const next = normalizeUpdateStatus(targetStatus);
+  if (!(next in UPDATE_STATUS_ORDER)) return false;
+  const employees = await getEmployeeDataFromDatabase();
+  const employeeRecord = employees.find((emp) => String(emp.id) === String(dbId));
+  if (!employeeRecord?.employeeData) return false;
+
+  const updatesArr = Array.isArray(employeeRecord.employeeData.dailyUpdates)
+    ? employeeRecord.employeeData.dailyUpdates
+    : [];
+  let changed = false;
+
+  const updatedUpdates = updatesArr.map((u) => {
+    if (String(u.updateId) !== String(updateId)) return u;
+    const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
+    const current = normalizeUpdateStatus(u.status, comments.length > 0);
+    if (UPDATE_STATUS_ORDER[next] <= UPDATE_STATUS_ORDER[current]) {
+      return { ...u, status: current, adminComments: comments };
+    }
+    changed = true;
+    return { ...u, status: next, adminComments: comments };
+  });
+
+  if (!changed) return false;
+  employeeRecord.employeeData.dailyUpdates = updatedUpdates;
+  await editEmployeeFromDatabase(employeeRecord.employeeData, employeeRecord.id);
+  return true;
 }
 
 function getUniqueSubmittedDates(updates) {
@@ -1012,8 +1066,7 @@ function openUpdateDetailModal(dbId, updateId) {
   const u = allUpdatesAggregate.find((x) => String(x.dbId) === String(dbId) && String(x.updateId) === String(updateId));
   if (!u) return;
   const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
-  const isReviewed = u.status === 'reviewed';
-  const statusLabel = isReviewed ? 'Reviewed' : 'Submitted';
+  const statusMeta = getStatusMeta(u.status);
 
   const hasUpdateText = u.updateText != null && String(u.updateText).trim() !== '';
   const fieldsHtml = hasUpdateText
@@ -1029,7 +1082,7 @@ function openUpdateDetailModal(dbId, updateId) {
       <span class="update-employee-name">${escapeHtml(u.employeeName)}</span>
       <span class="update-employee-id">${escapeHtml(u.employeeId)}</span>
       <span class="update-date">${escapeHtml(formatUpdateDate(u.date))}</span>
-      <span class="update-status-badge ${isReviewed ? 'reviewed' : 'submitted'}">${statusLabel}</span>
+      <span class="update-status-badge ${statusMeta.className}">${statusMeta.label}</span>
     </div>
     <div class="update-detail-fields">
       ${fieldsHtml}
@@ -1044,6 +1097,27 @@ function openUpdateDetailModal(dbId, updateId) {
     </div>
   `;
   updateDetailModal.classList.add('active');
+}
+
+async function openUpdateDetailModalWithStatus(dbId, updateId) {
+  openUpdateDetailModal(dbId, updateId);
+  // Admin viewed update: move Submitted -> Received only once.
+  try {
+    const changed = await setUpdateStatusForwardOnly(dbId, updateId, 'received');
+    if (!changed) return;
+    const updatedAllData = await getEmployeeDataFromDatabase();
+    allUpdatesAggregate = aggregateAllUpdates(updatedAllData);
+    currentFilteredUpdates = allUpdatesAggregate.filter((u) => {
+      const dateFilter = document.getElementById('filterUpdateDate')?.value ?? '';
+      const employeeFilter = document.getElementById('filterUpdateEmployee')?.value ?? '';
+      if (dateFilter && u.date !== dateFilter) return false;
+      if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
+      return true;
+    });
+    renderUpdatesList(currentFilteredUpdates);
+  } catch (_) {
+    // Non-blocking: modal stays open even if status sync fails.
+  }
 }
 
 function closeUpdateDetailModal() {
@@ -1071,7 +1145,7 @@ if (updatesListContainerEl) {
     // View Full button → open detail modal
     if (target.closest('[data-action="view-full"]')) {
       e.stopPropagation();
-      openUpdateDetailModal(dbId, updateId);
+      openUpdateDetailModalWithStatus(dbId, updateId);
       return;
     }
 
@@ -1129,7 +1203,7 @@ if (updatesListContainerEl) {
           };
           return {
             ...u,
-            status: 'reviewed',
+            status: normalizeUpdateStatus('replied', true),
             adminComments: [...existingComments, newComment],
           };
         });
@@ -1164,7 +1238,7 @@ if (updatesListContainerEl) {
 
     // Row click (anywhere else) → open detail modal
     if (target.closest('.update-overview-row') && !target.closest('.add-comment-form') && !target.closest('button')) {
-      openUpdateDetailModal(dbId, updateId);
+      openUpdateDetailModalWithStatus(dbId, updateId);
     }
   });
 }

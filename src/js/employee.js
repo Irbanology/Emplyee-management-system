@@ -33,23 +33,50 @@ const todayUpdateTextarea = document.getElementById('todayUpdate');
 const dailyUpdateStatus = document.getElementById('dailyUpdateStatus');
 const submitDailyUpdateBtn = document.getElementById('submitDailyUpdateBtn');
 
-
-// CHECK EMPLOYEE AUTH — redirect if not signed in
-const sessionCheckForEmployee = async () => {
-  try {
-    const session = await checkUserLoginOrNot();
-    if (!session) {
-      window.location.href = './index.html';
-      return;
-    }
-  } catch (err) {
-    console.error('sessionCheckForEmployee:', err);
-    window.location.href = './index.html';
-  }
+const UPDATE_STATUS_ORDER = {
+  submitted: 0,
+  received: 1,
+  replied: 2,
+  completed: 3,
 };
 
-sessionCheckForEmployee().catch(() => {});
-showLoading("Loading Profile...");
+function normalizeUpdateStatus(rawStatus, hasComments = false) {
+  const raw = String(rawStatus || '').trim().toLowerCase();
+  if (raw in UPDATE_STATUS_ORDER) return raw;
+  if (raw === 'reviewed') return hasComments ? 'replied' : 'received';
+  return 'submitted';
+}
+
+function getStatusMeta(status) {
+  const normalized = normalizeUpdateStatus(status);
+  if (normalized === 'received') return { label: 'Received', className: 'received' };
+  if (normalized === 'replied') return { label: 'Replied', className: 'replied' };
+  if (normalized === 'completed') return { label: 'Completed', className: 'completed' };
+  return { label: 'Submitted', className: 'submitted' };
+}
+
+
+let initialLoadingTimer = null;
+let initialLoadingShown = false;
+
+function beginInitialLoad() {
+  // Show loader only if fetch takes noticeable time.
+  initialLoadingTimer = setTimeout(() => {
+    showLoading("Loading Profile...");
+    initialLoadingShown = true;
+  }, 350);
+}
+
+function endInitialLoad() {
+  if (initialLoadingTimer) {
+    clearTimeout(initialLoadingTimer);
+    initialLoadingTimer = null;
+  }
+  if (initialLoadingShown) {
+    hideLoading();
+    initialLoadingShown = false;
+  }
+}
 
 
 if (logoutBtn) {
@@ -57,7 +84,7 @@ if (logoutBtn) {
     showSpinner();
     try {
       await logout();
-      sessionCheckForEmployee();
+      window.location.href = './index.html';
     } catch (err) {
       console.error('Logout:', err);
       createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Could not sign out.'));
@@ -92,8 +119,8 @@ function ensureDailyUpdates(empRecord) {
     empRecord.employeeData.dailyUpdates = empRecord.employeeData.dailyUpdates.map((u) => ({
       ...u,
       // Backfill defaults for legacy records
-      status: u.status || 'submitted',
       adminComments: Array.isArray(u.adminComments) ? u.adminComments : [],
+      status: normalizeUpdateStatus(u.status, Array.isArray(u.adminComments) && u.adminComments.length > 0),
     }));
   }
   return empRecord;
@@ -102,10 +129,17 @@ function ensureDailyUpdates(empRecord) {
 // SHOW USER DATA OVER THE EMPLOYEE PAGE...
 let currentEmployeeDataRef = null;
 const showUserData = async () => {
+  beginInitialLoad();
   try {
+    const session = await checkUserLoginOrNot();
+    if (!session) {
+      window.location.href = './index.html';
+      return;
+    }
+
     const user = await getCurrentUser();
     if (!user?.email) {
-      createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', 'Please sign in to view your profile.');
+      window.location.href = './index.html';
       return;
     }
     const allEmployeeData = await getEmployeeDataFromDatabase();
@@ -124,7 +158,7 @@ const showUserData = async () => {
     console.error('showUserData:', err);
     createToastForNotification('error', 'fa-solid fa-circle-exclamation', 'Error', getErrorMessage(err, 'Failed to load profile.'));
   } finally {
-    hideLoading();
+    endInitialLoad();
   }
 };
 
@@ -237,9 +271,7 @@ function renderMyUpdates(employeeData) {
   }
 
   container.innerHTML = sorted.map((u) => {
-    const isReviewed = u.status === 'reviewed';
-    const statusLabel = isReviewed ? 'Reviewed' : 'Submitted';
-    const statusClass = isReviewed ? 'reviewed' : 'submitted';
+    const statusMeta = getStatusMeta(u.status);
     const previewText = u.updateText != null
       ? trimPreview(u.updateText, 120)
       : `${trimPreview(u.workDone, 60)} • ${trimPreview(u.workPlanned, 60)}`;
@@ -248,7 +280,7 @@ function renderMyUpdates(employeeData) {
       <div class="update-card" data-update-id="${escapeHtmlEmployee(u.updateId)}" role="button" tabindex="0">
         <div class="top">
           <span class="date">${escapeHtmlEmployee(formatUpdateDateShort(u.date))}</span>
-          <span class="status ${statusClass}">${escapeHtmlEmployee(statusLabel)}</span>
+          <span class="status ${statusMeta.className}">${escapeHtmlEmployee(statusMeta.label)}</span>
         </div>
         <p class="preview">${escapeHtmlEmployee(previewText)}</p>
       </div>
@@ -315,6 +347,31 @@ function openUpdateDetailModal(updateId) {
   });
 }
 
+async function completeUpdateIfAcknowledged(updateId) {
+  if (!currentEmployeeDataRef?.length) return;
+  const record = currentEmployeeDataRef[0];
+  const updates = Array.isArray(record?.employeeData?.dailyUpdates) ? record.employeeData.dailyUpdates : [];
+  let changed = false;
+
+  const updatedUpdates = updates.map((u) => {
+    if (String(u.updateId) !== String(updateId)) return u;
+    const comments = Array.isArray(u.adminComments) ? u.adminComments : [];
+    if (!comments.length) return { ...u, adminComments: comments, status: normalizeUpdateStatus(u.status, false) };
+    const current = normalizeUpdateStatus(u.status, true);
+    if (UPDATE_STATUS_ORDER.completed <= UPDATE_STATUS_ORDER[current]) {
+      return { ...u, adminComments: comments, status: current };
+    }
+    changed = true;
+    return { ...u, adminComments: comments, status: 'completed' };
+  });
+
+  if (!changed) return;
+  record.employeeData.dailyUpdates = updatedUpdates;
+  await editEmployeeFromDatabase(record.employeeData, record.id);
+  currentEmployeeDataRef = [{ ...record, employeeData: { ...record.employeeData } }];
+  renderMyUpdates(currentEmployeeDataRef);
+}
+
 function closeUpdateDetailModal() {
   if (updateDetailModalEl) {
     updateDetailModalEl.classList.remove('active');
@@ -325,11 +382,18 @@ function closeUpdateDetailModal() {
 // Delegated click for update cards + modal close
 const myUpdatesListEl = document.getElementById('myUpdatesList');
 if (myUpdatesListEl) {
-  myUpdatesListEl.addEventListener('click', (e) => {
+  myUpdatesListEl.addEventListener('click', async (e) => {
     const card = e.target.closest('.update-card');
     if (card) {
       const updateId = card.getAttribute('data-update-id');
-      if (updateId) openUpdateDetailModal(updateId);
+      if (updateId) {
+        openUpdateDetailModal(updateId);
+        try {
+          await completeUpdateIfAcknowledged(updateId);
+        } catch (_) {
+          // Keep UI responsive even if completion sync fails.
+        }
+      }
       return;
     }
   });

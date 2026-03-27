@@ -225,7 +225,12 @@
   font-weight: 600;
 }
 
-.activity-update-status.reviewed {
+.activity-update-status.received {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.activity-update-status.replied {
   background-color: rgba(209, 250, 229, 0.2);
   color: #34d399;
 }
@@ -233,6 +238,11 @@
 .activity-update-status.submitted {
   background-color: rgba(254, 226, 226, 0.2);
   color: #f87171;
+}
+
+.activity-update-status.completed {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
 }
 
 .activity-update-body {

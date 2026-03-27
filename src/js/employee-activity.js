@@ -2,6 +2,12 @@ import { checkUserLoginOrNot, getEmployeeDataFromDatabase, supabaseUrl } from ".
 import { createToastForNotification, formatUpdateDate, getErrorMessage, hideSpinner, showSpinner } from "./utils.js";
 
 const THEME_STORAGE_KEY = "ems_admin_theme";
+const UPDATE_STATUS_ORDER = {
+  submitted: 0,
+  received: 1,
+  replied: 2,
+  completed: 3,
+};
 
 const el = {
   backBtn: document.getElementById("activityBackBtn"),
@@ -77,6 +83,21 @@ function toValidDateStr(val) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
 }
 
+function normalizeUpdateStatus(rawStatus, hasComments = false) {
+  const raw = String(rawStatus || "").trim().toLowerCase();
+  if (raw in UPDATE_STATUS_ORDER) return raw;
+  if (raw === "reviewed") return hasComments ? "replied" : "received";
+  return "submitted";
+}
+
+function getStatusMeta(status) {
+  const normalized = normalizeUpdateStatus(status);
+  if (normalized === "received") return { className: "received", label: "Received" };
+  if (normalized === "replied") return { className: "replied", label: "Replied" };
+  if (normalized === "completed") return { className: "completed", label: "Completed" };
+  return { className: "submitted", label: "Submitted" };
+}
+
 function normalizeUpdatesArray(employeeData) {
   const raw = employeeData?.dailyUpdates;
   if (!Array.isArray(raw)) return [];
@@ -85,8 +106,11 @@ function normalizeUpdatesArray(employeeData) {
       ...u,
       date: toValidDateStr(u?.date),
       createdAt: typeof u?.createdAt === "number" ? u.createdAt : 0,
-      status: u?.status === "reviewed" ? "reviewed" : "submitted",
       adminComments: Array.isArray(u?.adminComments) ? u.adminComments : [],
+    }))
+    .map((u) => ({
+      ...u,
+      status: normalizeUpdateStatus(u.status, u.adminComments.length > 0),
     }))
     .filter((u) => !!u.date)
     .sort((a, b) => {
@@ -222,13 +246,13 @@ function renderUpdatesList(updates) {
   }
   el.updatesList.innerHTML = updates
     .map((u) => {
-      const status = u.status === "reviewed" ? "reviewed" : "submitted";
+      const statusMeta = getStatusMeta(u.status);
       const safePreview = escapeHtml(getUpdatePreviewRaw(u));
       return `
         <div class="activity-update-item">
           <div class="activity-update-top">
             <span class="activity-update-date">${escapeHtml(formatUpdateDate(u.date))}</span>
-            <span class="activity-update-status ${status}">${status === "reviewed" ? "Reviewed" : "Submitted"}</span>
+            <span class="activity-update-status ${statusMeta.className}">${statusMeta.label}</span>
           </div>
           <div class="activity-update-body">
             <div class="activity-update-field">
