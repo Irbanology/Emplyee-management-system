@@ -73,6 +73,10 @@
               <div class="activity-updates-tools">
                 <input id="activitySearch" class="activity-search" type="search" placeholder="Search updates..." />
                 <select id="activityMonthFilter" class="activity-month-filter" aria-label="Filter by month"></select>
+                <div class="activity-date-filter-wrap">
+                  <input id="activityDateFilter" class="activity-date-filter" type="date" aria-label="Filter by date" />
+                  <button type="button" class="activity-date-clear" id="activityDateClear" aria-label="Clear date filter" title="Clear date filter">&times;</button>
+                </div>
               </div>
             </div>
             <div class="activity-updates-list" id="activityUpdatesList"></div>
@@ -84,6 +88,20 @@
         <p>Alasoft Team &copy; 2026</p>
       </footer>
     </main>
+  </div>
+
+  <!-- Update detail modal -->
+  <div class="activity-update-modal" id="activityUpdateModal" aria-hidden="true">
+    <div class="activity-update-modal-backdrop" data-close-modal="true"></div>
+    <div class="activity-update-modal-content">
+      <button type="button" class="activity-update-modal-close" id="activityUpdateModalClose" aria-label="Close">&times;</button>
+      <h3 class="activity-update-modal-title">Update details</h3>
+      <div class="activity-update-modal-meta">
+        <span class="activity-update-modal-date" id="activityUpdateModalDate">—</span>
+        <span class="activity-update-status submitted" id="activityUpdateModalStatus">Submitted</span>
+      </div>
+      <div class="activity-update-modal-body" id="activityUpdateModalBody"></div>
+    </div>
   </div>
 
   <!-- Toast messages -->

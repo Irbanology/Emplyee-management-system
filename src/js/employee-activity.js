@@ -25,7 +25,16 @@ const el = {
   updatesList: document.getElementById("activityUpdatesList"),
   monthFilter: document.getElementById("activityMonthFilter"),
   search: document.getElementById("activitySearch"),
+  dateFilter: document.getElementById("activityDateFilter"),
+  dateClear: document.getElementById("activityDateClear"),
+  updateModal: document.getElementById("activityUpdateModal"),
+  updateModalClose: document.getElementById("activityUpdateModalClose"),
+  updateModalDate: document.getElementById("activityUpdateModalDate"),
+  updateModalStatus: document.getElementById("activityUpdateModalStatus"),
+  updateModalBody: document.getElementById("activityUpdateModalBody"),
 };
+
+let currentRenderedUpdates = [];
 
 function escapeHtml(text) {
   if (text == null) return "—";
@@ -212,6 +221,13 @@ function getUpdatePreviewRaw(u) {
   return blockers ? `Completed: ${done}\nNext: ${next}\nBlockers: ${blockers}` : `Completed: ${done}\nNext: ${next}`;
 }
 
+function getCompactPreview(u, maxLen = 180) {
+  const oneLine = getUpdatePreviewRaw(u).replace(/\s+/g, " ").trim();
+  if (!oneLine) return "—";
+  if (oneLine.length <= maxLen) return oneLine;
+  return `${oneLine.slice(0, maxLen).trimEnd()}...`;
+}
+
 function monthKeyFromIso(iso) {
   if (!iso || typeof iso !== "string") return null;
   const m = iso.match(/^(\d{4})-(\d{2})-\d{2}$/);
@@ -239,31 +255,71 @@ function renderMonthOptions(updates) {
 }
 
 function renderUpdatesList(updates) {
+  currentRenderedUpdates = Array.isArray(updates) ? updates : [];
   if (!el.updatesList) return;
   if (!updates.length) {
     el.updatesList.innerHTML = `<div class="activity-empty">No updates match your filters.</div>`;
     return;
   }
   el.updatesList.innerHTML = updates
-    .map((u) => {
+    .map((u, idx) => {
       const statusMeta = getStatusMeta(u.status);
-      const safePreview = escapeHtml(getUpdatePreviewRaw(u));
+      const safePreview = escapeHtml(getCompactPreview(u));
       return `
-        <div class="activity-update-item">
+        <div class="activity-update-item" role="button" tabindex="0" data-update-idx="${idx}">
           <div class="activity-update-top">
             <span class="activity-update-date">${escapeHtml(formatUpdateDate(u.date))}</span>
             <span class="activity-update-status ${statusMeta.className}">${statusMeta.label}</span>
           </div>
-          <div class="activity-update-body">
-            <div class="activity-update-field">
-              <p class="activity-update-field-label">Update</p>
-              <p class="activity-update-field-text">${safePreview}</p>
-            </div>
-          </div>
+          <p class="activity-update-preview">${safePreview}</p>
         </div>
       `;
     })
     .join("");
+}
+
+function openUpdateModalByIndex(index) {
+  const idx = Number(index);
+  if (!Number.isFinite(idx) || idx < 0 || idx >= currentRenderedUpdates.length) return;
+  const u = currentRenderedUpdates[idx];
+  if (!u || !el.updateModal || !el.updateModalBody || !el.updateModalDate || !el.updateModalStatus) return;
+
+  const statusMeta = getStatusMeta(u.status);
+  const hasUpdateText = u?.updateText != null && String(u.updateText).trim() !== "";
+  const bodyHtml = hasUpdateText
+    ? `
+      <div class="activity-update-modal-section">
+        <p class="activity-update-modal-label">Today's Update</p>
+        <div class="activity-update-modal-text">${escapeHtml(String(u.updateText || "—"))}</div>
+      </div>
+    `
+    : `
+      <div class="activity-update-modal-section">
+        <p class="activity-update-modal-label">Work Done</p>
+        <div class="activity-update-modal-text">${escapeHtml(String(u.workDone || "—"))}</div>
+      </div>
+      <div class="activity-update-modal-section">
+        <p class="activity-update-modal-label">Work Planned</p>
+        <div class="activity-update-modal-text">${escapeHtml(String(u.workPlanned || "—"))}</div>
+      </div>
+      <div class="activity-update-modal-section">
+        <p class="activity-update-modal-label">Blockers</p>
+        <div class="activity-update-modal-text">${escapeHtml(String(u.blockers || "—"))}</div>
+      </div>
+    `;
+
+  el.updateModalDate.textContent = formatUpdateDate(u.date);
+  el.updateModalStatus.className = `activity-update-status ${statusMeta.className}`;
+  el.updateModalStatus.textContent = statusMeta.label;
+  el.updateModalBody.innerHTML = bodyHtml;
+  el.updateModal.classList.add("active");
+  el.updateModal.setAttribute("aria-hidden", "false");
+}
+
+function closeUpdateModal() {
+  if (!el.updateModal) return;
+  el.updateModal.classList.remove("active");
+  el.updateModal.setAttribute("aria-hidden", "true");
 }
 
 function makeSearchableText(u) {
@@ -286,10 +342,14 @@ function makeSearchableText(u) {
 function applyFiltersAndRender({ allUpdates }) {
   const q = (el.search?.value || "").trim().toLowerCase();
   const monthKey = el.monthFilter?.value || "";
+  const dateExact = (el.dateFilter?.value || "").trim(); // YYYY-MM-DD
 
   let filtered = allUpdates;
   if (monthKey) {
     filtered = filtered.filter((u) => monthKeyFromIso(u.date) === monthKey);
+  }
+  if (dateExact) {
+    filtered = filtered.filter((u) => String(u.date || "") === dateExact);
   }
   if (q) {
     filtered = filtered.filter((u) => makeSearchableText(u).includes(q));
@@ -381,6 +441,24 @@ async function loadActivity() {
     if (el.monthFilter) {
       el.monthFilter.addEventListener("change", () => applyFiltersAndRender({ allUpdates: updates }));
     }
+    if (el.dateFilter) {
+      el.dateFilter.addEventListener("change", () => applyFiltersAndRender({ allUpdates: updates }));
+      el.dateFilter.addEventListener("input", () => applyFiltersAndRender({ allUpdates: updates }));
+    }
+    if (el.dateClear && el.dateFilter) {
+      const syncClearVisibility = () => {
+        const hasVal = !!(el.dateFilter?.value || "").trim();
+        el.dateClear.style.display = hasVal ? "inline-flex" : "none";
+      };
+      syncClearVisibility();
+      el.dateFilter.addEventListener("change", syncClearVisibility);
+      el.dateFilter.addEventListener("input", syncClearVisibility);
+      el.dateClear.addEventListener("click", () => {
+        el.dateFilter.value = "";
+        syncClearVisibility();
+        applyFiltersAndRender({ allUpdates: updates });
+      });
+    }
 
     // Accessibility-friendly document title
     document.title = `Activity • ${emp.fullName || "Employee"}`;
@@ -404,10 +482,43 @@ function wireBackButton() {
   });
 }
 
+function wireUpdateModal() {
+  if (!el.updatesList) return;
+
+  el.updatesList.addEventListener("click", (event) => {
+    const card = event.target.closest(".activity-update-item");
+    if (!card) return;
+    const idx = card.getAttribute("data-update-idx");
+    if (idx == null) return;
+    openUpdateModalByIndex(idx);
+  });
+
+  el.updatesList.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const card = event.target.closest(".activity-update-item");
+    if (!card) return;
+    event.preventDefault();
+    const idx = card.getAttribute("data-update-idx");
+    if (idx == null) return;
+    openUpdateModalByIndex(idx);
+  });
+
+  el.updateModalClose?.addEventListener("click", closeUpdateModal);
+  el.updateModal?.addEventListener("click", (event) => {
+    if (event.target instanceof HTMLElement && event.target.matches('[data-close-modal="true"]')) {
+      closeUpdateModal();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeUpdateModal();
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initThemeFromUrlOrStorage();
   wireThemeToggle();
   wireBackButton();
+  wireUpdateModal();
   loadActivity().catch(() => {});
 });
 
