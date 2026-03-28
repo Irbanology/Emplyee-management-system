@@ -582,6 +582,9 @@ const UPDATES_PAGE_SIZE = 10;
 let allUpdatesAggregate = [];
 let currentFilteredUpdates = [];
 let currentUpdatesPage = 1;
+let dailyUpdatesPollingTimer = null;
+let dailyUpdatesPollingInFlight = false;
+let lastAdminUpdatesSignature = '';
 
 const UPDATE_STATUS_ORDER = {
   submitted: 0,
@@ -603,6 +606,51 @@ function getStatusMeta(status) {
   if (normalized === 'replied') return { label: 'Replied', className: 'replied' };
   if (normalized === 'completed') return { label: 'Completed', className: 'completed' };
   return { label: 'Submitted', className: 'submitted' };
+}
+
+function buildAdminUpdatesSignature(employeesData) {
+  const list = (Array.isArray(employeesData) ? employeesData : [])
+    .map((item) => {
+      const emp = item?.employeeData || {};
+      const updates = Array.isArray(emp.dailyUpdates) ? emp.dailyUpdates : [];
+      const normalized = updates.map((u) => {
+        const comments = Array.isArray(u?.adminComments) ? u.adminComments : [];
+        const lastComment = comments.length ? comments[comments.length - 1] : null;
+        return {
+          updateId: String(u?.updateId || ''),
+          date: String(u?.date || ''),
+          status: normalizeUpdateStatus(u?.status, comments.length > 0),
+          updatedAt: Number(u?.updatedAt || 0),
+          commentsCount: comments.length,
+          lastCommentId: String(lastComment?.commentId || ''),
+          lastCommentAt: Number(lastComment?.createdAt || 0),
+        };
+      }).sort((a, b) => a.updateId.localeCompare(b.updateId));
+      return {
+        rowId: String(item?.id || ''),
+        updates: normalized,
+      };
+    })
+    .sort((a, b) => a.rowId.localeCompare(b.rowId));
+  return JSON.stringify(list);
+}
+
+function getCurrentUpdateFilters() {
+  const today = new Date().toISOString().slice(0, 10);
+  let dateFilter = document.getElementById('filterUpdateDate')?.value ?? '';
+  const employeeFilter = document.getElementById('filterUpdateEmployee')?.value ?? '';
+  if (!dateFilter && !employeeFilter) dateFilter = today;
+  return { dateFilter, employeeFilter };
+}
+
+function applyCurrentUpdateFiltersToAggregate() {
+  const { dateFilter, employeeFilter } = getCurrentUpdateFilters();
+  currentFilteredUpdates = allUpdatesAggregate.filter((u) => {
+    if (dateFilter && u.date !== dateFilter) return false;
+    if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
+    return true;
+  });
+  renderUpdatesList(currentFilteredUpdates);
 }
 
 function aggregateAllUpdates(employeesData) {
@@ -981,6 +1029,7 @@ async function loadDailyUpdatesView() {
   showSpinner();
   try {
     const data = await getEmployeeDataFromDatabase();
+    lastAdminUpdatesSignature = buildAdminUpdatesSignature(data);
     allUpdatesAggregate = aggregateAllUpdates(data);
     currentUpdatesPage = 1;
 
@@ -1000,14 +1049,7 @@ async function loadDailyUpdatesView() {
     const today = new Date().toISOString().slice(0, 10);
     if (dateInput && !dateInput.value) dateInput.value = today;
 
-    const dateFilter = dateInput?.value ?? '';
-    const employeeFilter = document.getElementById('filterUpdateEmployee')?.value ?? '';
-    const initialFiltered = allUpdatesAggregate.filter((u) => {
-      if (dateFilter && u.date !== dateFilter) return false;
-      if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
-      return true;
-    });
-    renderUpdatesList(initialFiltered);
+    applyCurrentUpdateFiltersToAggregate();
 
     renderNotSubmittedToday(data);
   } catch (err) {
@@ -1022,19 +1064,38 @@ async function loadDailyUpdatesView() {
   }
 }
 
+async function pollDailyUpdatesIfVisible() {
+  if (dailyUpdatesPollingInFlight) return;
+  if (document.hidden) return;
+  if (!dailyUpdatesSection || dailyUpdatesSection.style.display === 'none') return;
+
+  dailyUpdatesPollingInFlight = true;
+  try {
+    const data = await getEmployeeDataFromDatabase();
+    const nextSignature = buildAdminUpdatesSignature(data);
+    if (nextSignature === lastAdminUpdatesSignature) return;
+
+    lastAdminUpdatesSignature = nextSignature;
+    allUpdatesAggregate = aggregateAllUpdates(data);
+    applyCurrentUpdateFiltersToAggregate();
+    renderNotSubmittedToday(data);
+  } catch (_) {
+    // Silent polling failure: keep current UI stable.
+  } finally {
+    dailyUpdatesPollingInFlight = false;
+  }
+}
+
+function startDailyUpdatesPolling() {
+  if (dailyUpdatesPollingTimer) return;
+  dailyUpdatesPollingTimer = setInterval(() => {
+    pollDailyUpdatesIfVisible().catch(() => {});
+  }, 4000);
+}
+
 document.getElementById('applyUpdateFilters')?.addEventListener('click', () => {
-  const today = new Date().toISOString().slice(0, 10);
-  let dateFilter = document.getElementById('filterUpdateDate')?.value ?? '';
-  const employeeFilter = document.getElementById('filterUpdateEmployee')?.value ?? '';
-  // If user didn't choose any filters, keep the default "today only" view
-  if (!dateFilter && !employeeFilter) dateFilter = today;
-  let filtered = allUpdatesAggregate.filter((u) => {
-    if (dateFilter && u.date !== dateFilter) return false;
-    if (employeeFilter && u.employeeEmail !== employeeFilter) return false;
-    return true;
-  });
   currentUpdatesPage = 1;
-  renderUpdatesList(filtered);
+  applyCurrentUpdateFiltersToAggregate();
 });
 
 document.getElementById('clearUpdateFilters')?.addEventListener('click', async () => {
@@ -1046,10 +1107,10 @@ document.getElementById('clearUpdateFilters')?.addEventListener('click', async (
   if (employeeSelect) employeeSelect.value = '';
   try {
     const data = await getEmployeeDataFromDatabase();
+    lastAdminUpdatesSignature = buildAdminUpdatesSignature(data);
     allUpdatesAggregate = aggregateAllUpdates(data);
     currentUpdatesPage = 1;
-    const todayOnly = allUpdatesAggregate.filter((u) => u.date === today);
-    renderUpdatesList(todayOnly);
+    applyCurrentUpdateFiltersToAggregate();
     renderNotSubmittedToday(data);
   } catch (err) {
     console.error('Clear filters / reload:', err);
@@ -1128,6 +1189,12 @@ document.getElementById('closeUpdateDetailModal')?.addEventListener('click', clo
 window.addEventListener('click', (e) => {
   if (e.target === updateDetailModal) closeUpdateDetailModal();
 });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    pollDailyUpdatesIfVisible().catch(() => {});
+  }
+});
+startDailyUpdatesPolling();
 
 // Event delegation: row click, View Full, Add Comment, Submit Comment
 const updatesListContainerEl = document.getElementById('updatesListContainer');

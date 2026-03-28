@@ -32,6 +32,10 @@ const dailyUpdateForm = document.getElementById('dailyUpdateForm');
 const todayUpdateTextarea = document.getElementById('todayUpdate');
 const dailyUpdateStatus = document.getElementById('dailyUpdateStatus');
 const submitDailyUpdateBtn = document.getElementById('submitDailyUpdateBtn');
+let currentUserEmail = '';
+let employeePollingTimer = null;
+let employeePollingInFlight = false;
+let lastEmployeeDataSignature = '';
 
 const UPDATE_STATUS_ORDER = {
   submitted: 0,
@@ -57,6 +61,34 @@ function getStatusMeta(status) {
 
 function isUpdateEditableByStatus(status) {
   return normalizeUpdateStatus(status) === 'submitted';
+}
+
+function buildEmployeeDataSignature(record) {
+  const emp = record?.employeeData || {};
+  const updates = Array.isArray(emp.dailyUpdates) ? emp.dailyUpdates : [];
+  const normalized = updates.map((u) => {
+    const comments = Array.isArray(u?.adminComments) ? u.adminComments : [];
+    const lastComment = comments.length ? comments[comments.length - 1] : null;
+    return {
+      updateId: String(u?.updateId || ''),
+      status: normalizeUpdateStatus(u?.status, comments.length > 0),
+      date: String(u?.date || ''),
+      updateText: String(u?.updateText || ''),
+      updatedAt: Number(u?.updatedAt || 0),
+      commentsCount: comments.length,
+      lastCommentId: String(lastComment?.commentId || ''),
+      lastCommentAt: Number(lastComment?.createdAt || 0),
+    };
+  }).sort((a, b) => a.updateId.localeCompare(b.updateId));
+  return JSON.stringify({
+    rowId: String(record?.id || ''),
+    fullName: String(emp.fullName || ''),
+    department: String(emp.department || ''),
+    description: String(emp.description || ''),
+    joiningDate: String(emp.joiningDate || ''),
+    profilePicture: String(emp.profilePicture || ''),
+    updates: normalized,
+  });
 }
 
 
@@ -123,12 +155,14 @@ const showUserData = async () => {
       window.location.href = './index.html';
       return;
     }
+    currentUserEmail = user.email;
     const allEmployeeData = await getEmployeeDataFromDatabase();
     let currentEmployeeData = (Array.isArray(allEmployeeData) ? allEmployeeData : []).filter(
       ({ employeeData }) => employeeData?.email === user.email
     );
     if (currentEmployeeData.length) {
       currentEmployeeData[0] = ensureDailyUpdates(currentEmployeeData[0]);
+      lastEmployeeDataSignature = buildEmployeeDataSignature(currentEmployeeData[0]);
     }
     currentEmployeeDataRef = currentEmployeeData;
 
@@ -373,7 +407,51 @@ async function completeUpdateIfAcknowledged(updateId) {
   record.employeeData.dailyUpdates = updatedUpdates;
   await editEmployeeFromDatabase(record.employeeData, record.id);
   currentEmployeeDataRef = [{ ...record, employeeData: { ...record.employeeData } }];
+  lastEmployeeDataSignature = buildEmployeeDataSignature(currentEmployeeDataRef[0]);
   renderMyUpdates(currentEmployeeDataRef);
+}
+
+async function pollEmployeeData() {
+  if (employeePollingInFlight) return;
+  if (document.hidden) return;
+  if (!currentUserEmail) return;
+  employeePollingInFlight = true;
+  try {
+    const allEmployeeData = await getEmployeeDataFromDatabase();
+    let currentEmployeeData = (Array.isArray(allEmployeeData) ? allEmployeeData : []).filter(
+      ({ employeeData }) => employeeData?.email === currentUserEmail
+    );
+    if (!currentEmployeeData.length) return;
+    currentEmployeeData[0] = ensureDailyUpdates(currentEmployeeData[0]);
+    const nextSignature = buildEmployeeDataSignature(currentEmployeeData[0]);
+    if (nextSignature === lastEmployeeDataSignature) return;
+
+    // Do not interrupt user while editing update text.
+    const isEditingUpdate = !!updateDetailBodyEl?.querySelector('#updateEditTextarea');
+    if (isEditingUpdate) return;
+
+    lastEmployeeDataSignature = nextSignature;
+    currentEmployeeDataRef = currentEmployeeData;
+    showCurrentDataInPage(currentEmployeeDataRef);
+    updateDailyUpdateUI(currentEmployeeDataRef);
+    renderMyUpdates(currentEmployeeDataRef);
+
+    const openUpdateId = updateDetailModalEl?.classList.contains('active')
+      ? updateDetailBodyEl?.getAttribute('data-update-id')
+      : null;
+    if (openUpdateId) openUpdateDetailModal(openUpdateId);
+  } catch (_) {
+    // Silent polling failure: avoid noisy toasts every few seconds.
+  } finally {
+    employeePollingInFlight = false;
+  }
+}
+
+function startEmployeePolling() {
+  if (employeePollingTimer) return;
+  employeePollingTimer = setInterval(() => {
+    pollEmployeeData().catch(() => {});
+  }, 4000);
 }
 
 function renderUpdateEditForm(updateId, currentText) {
@@ -483,6 +561,12 @@ updateDetailBodyEl?.addEventListener('click', handleUpdateDetailActions);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeUpdateDetailModal();
 }, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    pollEmployeeData().catch(() => {});
+  }
+});
+startEmployeePolling();
 
 // PREVIEW IMG CODE FOR SHOW EMPLOYEE PROFILE IMG PREVIEW...
 if (previewFile) {
